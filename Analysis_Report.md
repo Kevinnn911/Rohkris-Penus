@@ -391,7 +391,15 @@
 * **Impact:**
   - Tampilan hero beranda kini lebih bersih, proporsional, dan langsung berfokus pada judul "Bertumbuh dalam Iman" tanpa elemen badge yang redundant.
   - Berkas arsip `.zip` untuk deployment cloud hosting telah diperbarui secara penuh dan siap langsung diunggah/di-commit oleh pengembang.
+## [DONE] Inisialisasi Repository Git dan Publikasi ke GitHub (Rohkris-Penus)
 
-
-
-
+* **Status:** Selesai (Production Ready & Published)
+* **Feature:** Publikasi codebase resmi ke repository GitHub publik untuk kolaborasi kontributor
+* **Technical Implementation:**
+  1. Memperbarui `.gitignore` untuk mengecualikan berkas arsip deploy (`*.zip`, `*.tar.gz`) serta memastikan berkas rahasia (`.env.local`, `kredensial_hosting.txt`, `node_modules`) tidak terunggah ke publik.
+  2. Menginisialisasi Git, membuat initial commit pada branch `main` dengan 132 file sumber bersih, konfigurasi, pengujian unit, dan dokumentasi.
+  3. Menghubungkan remote repository `https://github.com/Kevinnn911/Rohkris-Penus.git`.
+  4. Melakukan rebase sinkronisasi dengan remote repository yang memuat `LICENSE` (MIT License) dan menyelesaikan konflik judul dokumentasi pada `README.md`.
+  5. Melakukan push branch `main` ke remote repository GitHub (`git push -u origin main`).
+* **Impact:**
+  - Kode sumber proyek kini tersedia di GitHub secara aman dan siap untuk kolaborasi tim maupun kontribusi pengembang luar tanpa risiko kebocoran data rahasia/kredensial produksi.
