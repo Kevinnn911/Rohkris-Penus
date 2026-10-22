@@ -1,0 +1,388 @@
+@import "tailwindcss";
+
+/*
+ * Token desain Rohkris Pelita Nusantara.
+ * Tailwind v4 memakai konfigurasi berbasis CSS (@theme), bukan tailwind.config.js.
+ *
+ * Arah visual: terang dan lapang — latar abu-abu muda, kartu putih membulat,
+ * tinta hampir hitam, dan aksen kuning "stabilo" untuk sorotan.
+ * Nama skala lama dipertahankan agar seluruh komponen ikut berubah:
+ *   navy  → skala tinta/abu netral (teks & elemen utama)
+ *   ivory → putih & abu-abu sangat muda (latar)
+ *   gold  → kuning sorotan (aksen); 600/700 cukup gelap untuk teks
+ * Pasangan warna teks/latar dipilih agar kontras memenuhi WCAG AA.
+ */
+@theme {
+  /* Tinta — warna utama */
+  --color-navy-50: #f6f6f7;
+  --color-navy-100: #ececee;
+  --color-navy-200: #dedee2;
+  --color-navy-300: #c4c4ca;
+  --color-navy-400: #9a9aa3;
+  --color-navy-500: #6f6f78; /* teks sekunder di atas putih: ~5:1 */
+  --color-navy-600: #55555d;
+  --color-navy-700: #3f3f46;
+  --color-navy-800: #27272c;
+  --color-navy-900: #18181b;
+  --color-navy-950: #0d0d0f;
+
+  /* Latar terang */
+  --color-ivory-50: #ffffff;
+  --color-ivory-100: #f3f3f1;
+  --color-ivory-200: #ebebe8;
+  --color-ivory-300: #e1e1dd;
+  --color-ivory-400: #d3d3ce;
+
+  /* Kuning sorotan — aksen */
+  --color-gold-50: #fefde9;
+  --color-gold-100: #fdfbc8;
+  --color-gold-200: #fbf794;
+  --color-gold-300: #f6f06a; /* pill aktif / tombol aksen */
+  --color-gold-400: #ece24a;
+  --color-gold-500: #cfc22b;
+  --color-gold-600: #75680a; /* teks di atas putih: ~5.6:1 */
+  --color-gold-700: #574d06;
+
+  /* Sage — aksen sekunder (tag pastel) */
+  --color-sage-100: #e3f7ee;
+  --color-sage-200: #c4eedb;
+  --color-sage-300: #97dfbf;
+  --color-sage-400: #5fc79c;
+  --color-sage-500: #2f9e72;
+  --color-sage-600: #1f7a56;
+  --color-sage-700: #175c41;
+
+  /* Warna status (tidak pernah jadi satu-satunya penanda — selalu ada teks/ikon) */
+  --color-success-50: #ecfdf3;
+  --color-success-500: #12b76a;
+  --color-success-600: #067647;
+  --color-success-700: #05603a;
+  --color-warning-50: #fffaeb;
+  --color-warning-500: #f79009;
+  --color-warning-600: #b54708;
+  --color-warning-700: #93370d;
+  --color-danger-50: #fef3f2;
+  --color-danger-500: #f04438;
+  --color-danger-600: #b42318;
+  --color-danger-700: #912018;
+  --color-info-50: #eff8ff;
+  --color-info-500: #2e90fa;
+  --color-info-600: #175cd3;
+  --color-info-700: #1849a9;
+
+  /* Tipografi: Poppins — geometris, tebal, dan bersih untuk judul maupun isi. */
+  --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+
+  /* Radius — dipakai sebagai utilitas `rounded-card`, `rounded-panel`, `rounded-hero`. */
+  --radius-card: 1.5rem;
+  --radius-panel: 2rem;
+  --radius-hero: 2.75rem;
+
+  /* Bayangan lembut dan lebar — kartu terasa melayang ringan. */
+  --shadow-soft: 0 1px 2px rgb(13 13 15 / 0.04), 0 10px 30px -18px rgb(13 13 15 / 0.18);
+  --shadow-lift: 0 2px 6px rgb(13 13 15 / 0.04), 0 30px 60px -30px rgb(13 13 15 / 0.28);
+  --shadow-float: 0 24px 70px -24px rgb(13 13 15 / 0.22), 0 2px 8px rgb(13 13 15 / 0.04);
+  --shadow-glow: 0 10px 28px -12px rgb(207 194 43 / 0.75);
+
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --animate-fade-up: fade-up 0.8s var(--ease-out-soft) both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-slide-left: slide-left 0.38s var(--ease-out-soft) both;
+  --animate-slide-right: slide-right 0.38s var(--ease-out-soft) both;
+  --animate-card-in: card-in 0.35s var(--ease-out-soft) both;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes shimmer {
+    from {
+      background-position: -200% 0;
+    }
+    to {
+      background-position: 200% 0;
+    }
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+
+  @keyframes slide-left {
+    from {
+      opacity: 0.15;
+      transform: translateX(18px) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+  }
+
+  @keyframes slide-right {
+    from {
+      opacity: 0.15;
+      transform: translateX(-18px) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+  }
+
+  @keyframes card-in {
+    from {
+      opacity: 0.25;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+
+/*
+ * Latar "kabut" untuk kartu hero terang: langit pucat yang memudar ke putih.
+ * Dipadukan dengan <HeroBackdrop> (siluet gereja yang diburamkan).
+ */
+@utility bg-mist {
+  background-color: #eef0f2;
+  background-image:
+    radial-gradient(60% 55% at 50% 0%, rgb(255 255 255 / 0.95), transparent 70%),
+    radial-gradient(40% 50% at 10% 30%, rgb(255 255 255 / 0.7), transparent 70%),
+    radial-gradient(45% 50% at 95% 25%, rgb(255 255 255 / 0.65), transparent 70%),
+    linear-gradient(180deg, #f4f5f6 0%, #e7eaee 55%, #dfe3e8 100%);
+}
+
+/* Latar gelap "tinta" — untuk footer dan pita CTA. */
+@utility bg-aurora {
+  background-color: var(--color-navy-950);
+  background-image:
+    radial-gradient(50% 60% at 10% 0%, rgb(246 240 106 / 0.14), transparent 70%),
+    radial-gradient(45% 55% at 95% 100%, rgb(255 255 255 / 0.06), transparent 70%);
+}
+
+/* Kisi tipis sebagai tekstur di atas latar gelap. */
+@utility bg-grid-faint {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.04) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+/* Sorotan stabilo di belakang teks (seperti coretan kuning di referensi). */
+@utility text-highlight {
+  background-image: linear-gradient(transparent 58%, var(--color-gold-300) 58%, var(--color-gold-300) 92%, transparent 92%);
+  padding-inline: 0.08em;
+}
+
+/* Kompatibilitas: dulu berupa teks bergradasi emas, kini sorotan stabilo. */
+@utility text-gold-gradient {
+  background-image: linear-gradient(transparent 58%, var(--color-gold-300) 58%, var(--color-gold-300) 92%, transparent 92%);
+  padding-inline: 0.08em;
+}
+
+/*
+ * Titik kuning kecil di DEPAN label, sejajar di tengah baris teks.
+ * (Sebelumnya lingkaran ditumpuk di belakang huruf pertama — posisinya
+ * bergeser mengikuti bentuk huruf sehingga tampak tidak rapi.)
+ * Ukuran ikut font-size label agar proporsional di semua tempat.
+ */
+@utility label-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55em;
+  &::before {
+    content: "";
+    flex-shrink: 0;
+    width: 0.55em;
+    height: 0.55em;
+    border-radius: 9999px;
+    background: var(--color-gold-400);
+    box-shadow: 0 0 0 0.2em var(--color-gold-100);
+  }
+}
+
+/* Sembunyikan scrollbar pada carousel horizontal (tetap bisa digulir). */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Hormati prefers-reduced-motion (PRD §9 aksesibilitas) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-ivory-100);
+  color: var(--color-navy-900);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background-color: var(--color-gold-300);
+  color: var(--color-navy-950);
+}
+
+/* Fokus keyboard yang selalu terlihat jelas */
+:focus-visible {
+  outline: 3px solid var(--color-navy-950);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Di atas latar gelap (footer, pita CTA, lightbox), cincin fokus berganti kuning agar tetap terlihat. */
+.bg-aurora :focus-visible,
+.bg-navy-950 :focus-visible {
+  outline-color: var(--color-gold-300);
+}
+
+/* Lewati ke konten utama — tampil hanya saat difokuskan via keyboard */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+}
+.skip-link:focus {
+  left: 1rem;
+  top: 1rem;
+}
+
+/* Isi Markdown yang sudah disanitasi (lihat lib/markdown.ts) */
+.prose-rohkris {
+  font-size: 1.0625rem;
+  line-height: 1.8;
+  color: var(--color-navy-700);
+}
+.prose-rohkris > * + * {
+  margin-top: 1.15rem;
+}
+.prose-rohkris h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: var(--color-navy-950);
+  margin-top: 2.5rem;
+}
+.prose-rohkris h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--color-navy-950);
+  margin-top: 2rem;
+}
+.prose-rohkris strong {
+  color: var(--color-navy-950);
+  font-weight: 600;
+}
+.prose-rohkris a {
+  color: var(--color-navy-950);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: var(--color-gold-400);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 3px;
+}
+.prose-rohkris a:hover {
+  background-color: var(--color-gold-100);
+}
+.prose-rohkris ul,
+.prose-rohkris ol {
+  padding-left: 1.5rem;
+}
+.prose-rohkris ul {
+  list-style: disc;
+}
+.prose-rohkris ul li::marker {
+  color: var(--color-gold-500);
+}
+.prose-rohkris ol {
+  list-style: decimal;
+}
+.prose-rohkris li + li {
+  margin-top: 0.4rem;
+}
+.prose-rohkris blockquote {
+  border-left: 4px solid var(--color-gold-300);
+  background: var(--color-gold-50);
+  border-radius: 0 1rem 1rem 0;
+  padding: 0.9rem 1.25rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--color-navy-900);
+}
+.prose-rohkris hr {
+  border: 0;
+  height: 1px;
+  background: var(--color-navy-100);
+  margin: 2.5rem 0;
+}
+.prose-rohkris table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.9375rem;
+  border: 1px solid var(--color-navy-100);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+.prose-rohkris th,
+.prose-rohkris td {
+  border-bottom: 1px solid var(--color-navy-100);
+  padding: 0.65rem 0.9rem;
+  text-align: left;
+}
+.prose-rohkris tr:last-child td {
+  border-bottom: 0;
+}
+.prose-rohkris th {
+  background-color: var(--color-navy-50);
+  font-weight: 600;
+  color: var(--color-navy-900);
+}
+.prose-rohkris code {
+  background-color: var(--color-navy-50);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.375rem;
+  font-size: 0.875em;
+}
+.prose-rohkris img {
+  border-radius: var(--radius-card);
+  max-width: 100%;
+  height: auto;
+}

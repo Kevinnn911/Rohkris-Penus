@@ -1,0 +1,77 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+import {
+  IkonArsip,
+  kelasTombolBulat,
+  TombolAksi,
+  TombolKonfirmasi,
+} from "@/components/admin/Feedback";
+import { IconCheck, IconEdit, IconEye, IconTrash } from "@/components/ui/Icons";
+import { hapusBerita, ubahStatusBerita } from "@/lib/actions/news";
+
+export function AksiBerita({
+  id,
+  status,
+  judul,
+}: {
+  id: string;
+  status: "draft" | "published" | "archived";
+  judul: string;
+}) {
+  const router = useRouter();
+
+  async function jalankan<T>(aksi: Promise<T>): Promise<T> {
+    const hasil = await aksi;
+    router.refresh();
+    return hasil;
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Link
+        href={`/admin/berita/${id}`}
+        className={kelasTombolBulat("secondary")}
+        title="Edit"
+      >
+        <IconEdit />
+        <span className="sr-only">Edit</span>
+      </Link>
+
+      {status !== "published" ? (
+        <TombolAksi
+          label="Terbitkan"
+          variant="primary"
+          ikon={<IconCheck />}
+          onAksi={() => jalankan(ubahStatusBerita(id, "published"))}
+        />
+      ) : (
+        <TombolAksi
+          label="Tarik publikasi"
+          ikon={<IconEye />}
+          onAksi={() => jalankan(ubahStatusBerita(id, "draft"))}
+        />
+      )}
+
+      {status !== "archived" ? (
+        <TombolAksi
+          label="Arsipkan"
+          ikonSaja
+          ikon={<IkonArsip />}
+          onAksi={() => jalankan(ubahStatusBerita(id, "archived"))}
+        />
+      ) : null}
+
+      <TombolKonfirmasi
+        label="Hapus"
+        ikonSaja
+        ikon={<IconTrash />}
+        pesanKonfirmasi={`Hapus berita “${judul}” secara permanen? Tindakan ini tidak dapat dibatalkan.`}
+        onKonfirmasi={() => jalankan(hapusBerita(id))}
+        labelLoading="Menghapus…"
+      />
+    </div>
+  );
+}

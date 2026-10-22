@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+
+# Environment — JANGAN pernah commit kredensial
+.env
+.env.local
+.env*.local
+kredensial_hosting.txt
+
+# Build & cache
+*.tsbuildinfo
+.turbo/
+*.zip
+*.tar.gz
+
+# Editor & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Log
+*.log
+npm-debug.log*
+
+# Berkas unggahan admin (disimpan di hosting, bukan di repository)
+/storage/
