@@ -16,6 +16,8 @@ export const metadata: Metadata = {
 
 const DAFTAR_ISI = [
   { id: "data-dikumpulkan", label: "Data yang kami kumpulkan" },
+  { id: "penggunaan", label: "Penggunaan & penyimpanan" },
+  { id: "hak-anda", label: "Hak Anda" },
   { id: "dokumentasi", label: "Dokumentasi kegiatan" },
   { id: "layanan-lain", label: "Tautan ke layanan lain" },
   { id: "pertanyaan", label: "Pertanyaan" },
@@ -39,21 +41,19 @@ export default async function PrivasiPage() {
             <div className="space-y-5 lg:sticky lg:top-28">
               <nav
                 aria-label="Daftar isi"
-                className="rounded-[1.75rem] bg-white p-6 shadow-float"
+                className="rounded-bar border border-navy-200/80 bg-white p-6"
               >
-                <p className="text-lg font-semibold text-navy-950">
-                  <span className="label-dot">Daftar Isi</span>
-                </p>
+                <p className="text-sm font-semibold text-navy-950">Daftar Isi</p>
                 <ol className="mt-3 space-y-0.5">
                   {DAFTAR_ISI.map((item, index) => (
                     <li key={item.id}>
                       <a
                         href={`#${item.id}`}
-                        className="group flex min-h-11 items-center gap-3 rounded-full px-2 text-sm text-navy-600 transition-colors hover:bg-navy-50 hover:text-navy-950"
+                        className="pressable group flex min-h-11 items-center gap-3 rounded-full px-2 text-sm text-navy-600 hover:bg-navy-50 hover:text-navy-950"
                       >
                         <span
                           aria-hidden="true"
-                          className="grid size-7 shrink-0 place-items-center rounded-full bg-navy-100 text-xs font-semibold text-navy-950 tabular-nums transition-colors group-hover:bg-gold-300"
+                          className="grid size-7 shrink-0 place-items-center rounded-full bg-navy-100 text-xs font-semibold text-navy-950 tabular-nums transition-colors duration-200 group-hover:bg-navy-200"
                         >
                           {index + 1}
                         </span>
@@ -67,13 +67,14 @@ export default async function PrivasiPage() {
               <div className="flex gap-4 rounded-card border border-navy-200/80 bg-white p-5">
                 <span
                   aria-hidden="true"
-                  className="grid size-11 shrink-0 place-items-center rounded-full bg-gold-300 text-navy-950"
+                  className="grid size-11 shrink-0 place-items-center rounded-full bg-navy-50 text-navy-700 ring-1 ring-inset ring-navy-200/80"
                 >
                   <IconShield className="size-5" />
                 </span>
                 <p className="text-sm leading-relaxed text-navy-600">
-                  <strong className="font-semibold text-navy-950">Singkatnya:</strong> website ini
-                  tidak menyimpan data pendaftaran peserta.
+                  <strong className="font-semibold text-navy-950">Singkatnya:</strong> data pendaftaran
+                  hanya disimpan bila kegiatan memakai formulir di situs ini, hanya dilihat pengurus,
+                  dan tidak pernah dijual atau dibagikan.
                 </p>
               </div>
             </div>
@@ -83,11 +84,47 @@ export default async function PrivasiPage() {
             <div className="prose-rohkris text-navy-800 [&>h2:first-child]:mt-0! [&>h2]:scroll-mt-28">
               <h2 id="data-dikumpulkan">Data yang kami kumpulkan</h2>
               <p>
-                Website ini <strong>tidak menyimpan data pendaftaran peserta</strong>. Seluruh
-                proses pendaftaran kegiatan berlangsung di layanan eksternal seperti Google Forms.
-                Ketika Anda menekan tombol <em>Daftar Sekarang</em>, Anda diarahkan ke layanan
-                tersebut, dan data yang Anda isi tunduk pada kebijakan privasi penyedia layanan
-                itu.
+                Pendaftaran kegiatan dilakukan dengan salah satu dari dua cara, tergantung
+                kegiatannya:
+              </p>
+              <ul>
+                <li>
+                  <strong>Formulir di situs ini.</strong> Jawaban yang Anda isi (misalnya nama, kelas,
+                  nomor WhatsApp, alamat email, dan berkas yang Anda unggah) disimpan di server
+                  website Rohkris. Untuk mencegah penyalahgunaan, kami juga mencatat alamat IP dan
+                  jenis peramban saat formulir dikirim.
+                </li>
+                <li>
+                  <strong>Formulir luar</strong> seperti Google Forms. Tombol <em>Daftar Sekarang</em>
+                  {" "}membawa Anda ke layanan tersebut, dan data yang Anda isi tunduk pada kebijakan
+                  privasi penyedia layanan itu. Website ini tidak menyimpannya.
+                </li>
+              </ul>
+              <p>
+                Selain itu, website ini tidak memasang pelacak iklan dan tidak meminta Anda membuat
+                akun.
+              </p>
+
+              <h2 id="penggunaan">Penggunaan &amp; penyimpanan</h2>
+              <p>
+                Data pendaftaran hanya dipakai pengurus untuk menyelenggarakan kegiatan yang Anda
+                daftari: mendata peserta, menghubungi Anda, dan mengatur kebutuhan acara. Data hanya
+                dapat dilihat oleh pengurus yang memiliki akun panel admin, tidak ditampilkan di
+                halaman publik, dan tidak pernah dijual atau dibagikan kepada pihak lain.
+              </p>
+              <p>
+                Berkas yang Anda unggah disimpan di folder privat yang tidak dapat diakses publik.
+                Pengurus menghapus data pendaftaran setelah tidak lagi dibutuhkan untuk kegiatan
+                tersebut.
+              </p>
+
+              <h2 id="hak-anda">Hak Anda</h2>
+              <p>
+                Bila panitia mengizinkan, Anda akan menerima tautan pribadi untuk mengubah jawaban
+                selama pendaftaran masih dibuka. Simpan tautan itu dan jangan dibagikan. Anda juga
+                dapat meminta pengurus untuk melihat, memperbaiki, atau menghapus data pendaftaran
+                Anda melalui kontak di bawah. Setiap formulir di situs ini meminta persetujuan Anda
+                sebelum dikirim.
               </p>
 
               <h2 id="dokumentasi">Dokumentasi kegiatan</h2>
@@ -101,8 +138,8 @@ export default async function PrivasiPage() {
 
               <h2 id="layanan-lain">Tautan ke layanan lain</h2>
               <p>
-                Beberapa halaman memuat tautan ke layanan pihak ketiga, misalnya Google Forms atau
-                Google Drive. Kami tidak mengendalikan praktik privasi layanan tersebut.
+                Beberapa kegiatan memakai layanan pihak ketiga, misalnya Google Forms atau Google
+                Drive. Kami tidak mengendalikan praktik privasi layanan tersebut.
               </p>
 
               <h2 id="pertanyaan">Pertanyaan</h2>

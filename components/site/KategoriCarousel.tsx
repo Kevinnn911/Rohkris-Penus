@@ -49,7 +49,7 @@ export function KategoriCarousel({
   }
 
   const tombol =
-    "grid size-12 place-items-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-40";
+    "pressable grid size-12 place-items-center rounded-full disabled:cursor-not-allowed disabled:opacity-40";
 
   return (
     <section aria-labelledby={judulId}>
@@ -58,7 +58,7 @@ export function KategoriCarousel({
         <div className="flex items-center gap-3">
           <Link
             href="/kegiatan"
-            className="inline-flex min-h-12 items-center gap-2 rounded-full bg-white px-5 text-sm font-medium text-navy-950 ring-1 ring-inset ring-navy-200 transition-colors hover:bg-navy-50"
+            className="pressable inline-flex min-h-12 items-center gap-2 rounded-full bg-white px-5 text-sm font-medium text-navy-950 ring-1 ring-inset ring-navy-200 hover:bg-navy-50"
           >
             <IconFilter className="size-4" />
             Filter
@@ -76,7 +76,7 @@ export function KategoriCarousel({
             type="button"
             onClick={() => geser(1)}
             disabled={!bisaKanan}
-            className={cn(tombol, "bg-gold-300 text-navy-950 shadow-glow enabled:hover:bg-gold-200")}
+            className={cn(tombol, "bg-gold-300 text-navy-950 enabled:hover:bg-gold-200")}
           >
             <IconChevronRight className="size-5" />
             <span className="sr-only">Kategori berikutnya</span>

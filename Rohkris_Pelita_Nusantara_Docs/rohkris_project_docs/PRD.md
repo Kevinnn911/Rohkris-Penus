@@ -103,12 +103,14 @@ Setiap kegiatan memiliki halaman detail yang bisa dibuka dari kartu kegiatan. To
 ### 6.3 Di luar cakupan MVP
 
 - Sistem pembayaran.
-- Registrasi peserta yang disimpan di database website.
+- ~~Registrasi peserta yang disimpan di database website.~~ (Kini tersedia sebagai opsi: lihat catatan di bawah.)
 - Integrasi otomatis membaca isi Google Drive atau Google Forms.
 - Sistem akun untuk pengunjung umum.
 - Live streaming bawaan website.
 
 > Catatan: pendaftaran dilakukan oleh form/layanan eksternal. Website hanya menyimpan tautan pendaftaran dan mengarahkan pengunjung ke sana.
+>
+> **Pembaruan (Oktober 2026): Formulir Internal.** Per kegiatan, admin dapat memilih *formulir luar* (perilaku di atas) atau *formulir internal* yang dibuat di panel admin (jawaban singkat, paragraf, pilihan ganda, kotak centang, dropdown, skala linear, kisi, tanggal, waktu, unggah berkas, lompat bagian). Pada mode internal, respons disimpan di database website, hanya dapat dilihat admin, dan dapat diekspor ke CSV; dilengkapi kuota, batas waktu (memakai jadwal pendaftaran kegiatan), satu respons per email, tautan ubah jawaban, email konfirmasi opsional, serta kotak persetujuan penggunaan data. Ketentuan privasi pada §9 untuk formulir eksternal tetap berlaku untuk mode eksternal; kebijakan privasi situs diperbarui untuk mode internal.
 
 ## 7. Struktur Halaman / Information Architecture
 

@@ -48,7 +48,7 @@ function FilterChip({
       href={href}
       aria-current={active ? "true" : undefined}
       className={cn(
-        "inline-flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-4 text-sm transition-colors duration-200",
+        "pressable inline-flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-4 text-sm",
         active
           ? "bg-gold-300 font-medium text-navy-950"
           : "bg-white text-navy-700 ring-1 ring-inset ring-navy-200 hover:bg-navy-50 hover:text-navy-950",
@@ -110,7 +110,7 @@ export default async function KegiatanPage({
 
       {/* Toolbar filter melayang di tepi bawah header */}
       <div className="relative z-10 mx-auto -mt-8 max-w-6xl px-4 sm:-mt-10 sm:px-8">
-        <div className="animate-fade-up rounded-[1.75rem] bg-white p-4 shadow-float sm:p-6">
+        <div className="rounded-bar bg-white p-4 shadow-float sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3 px-1 pb-4">
             <p className="inline-flex items-center gap-3 text-sm font-medium text-navy-950">
               <span className="grid size-11 place-items-center rounded-full bg-navy-100">
@@ -121,7 +121,7 @@ export default async function KegiatanPage({
             {adaFilter ? (
               <Link
                 href="/kegiatan"
-                className="inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-medium text-navy-700 transition-colors hover:bg-navy-50 hover:text-navy-950"
+                className="pressable inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-medium text-navy-700 hover:bg-navy-50 hover:text-navy-950"
               >
                 <IconClose className="size-4" />
                 Atur ulang
@@ -136,7 +136,7 @@ export default async function KegiatanPage({
               className="grid gap-3 md:grid-cols-[7.5rem_1fr] md:items-start"
             >
               <h2 id="filter-kategori" className="px-1 pt-2.5 text-base font-semibold text-navy-950">
-                <span className="label-dot">Kategori</span>
+                Kategori
               </h2>
               <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-none sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
                 {["semua", ...EVENT_CATEGORIES].map((kategori) => {
@@ -166,7 +166,7 @@ export default async function KegiatanPage({
               className="grid gap-3 md:grid-cols-[7.5rem_1fr] md:items-start"
             >
               <h2 id="filter-status" className="px-1 pt-2.5 text-base font-semibold text-navy-950">
-                <span className="label-dot">Status</span>
+                Status
               </h2>
               <ul className="flex flex-wrap gap-2">
                 {STATUS_FILTERS.map((item) => (
@@ -207,7 +207,7 @@ export default async function KegiatanPage({
           ) : (
             <>
               <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
-                <h2 className="text-2xl font-bold tracking-[-0.03em] text-navy-950 sm:text-3xl">
+                <h2 className="text-2xl font-bold tracking-heading text-navy-950 sm:text-3xl">
                   Daftar Kegiatan
                 </h2>
                 <p className="text-sm text-navy-600" role="status">

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { FormEvent } from "@/components/admin/FormEvent";
-import { KepalaHalamanAdmin, RemahRoti } from "@/components/admin/Fields";
+import { KepalaHalamanAdmin } from "@/components/admin/Fields";
 import { perbaruiEvent } from "@/lib/actions/events";
 import type { ActionResult } from "@/lib/actions/helpers";
 import { requireAdmin } from "@/lib/auth/guard";
@@ -28,11 +28,6 @@ export default async function EditKegiatanPage({
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
-      <RemahRoti
-        induk={{ href: "/admin/kegiatan", label: "Kelola Kegiatan" }}
-        sekarang={event.title}
-      />
-
       <KepalaHalamanAdmin
         eyebrow="Kegiatan"
         judul="Edit Kegiatan"

@@ -403,3 +403,33 @@
   5. Melakukan push branch `main` ke remote repository GitHub (`git push -u origin main`).
 * **Impact:**
   - Kode sumber proyek kini tersedia di GitHub secara aman dan siap untuk kolaborasi tim maupun kontribusi pengembang luar tanpa risiko kebocoran data rahasia/kredensial produksi.
+
+## [DONE] Implementasi Sistem Formulir Internal Pendaftaran Kegiatan dan Pengelolaan Respons
+
+* **Status:** Selesai (Production Ready)
+* **Feature:** Sistem formulir pendaftaran dinamis mandiri di dalam website (pengganti Google Forms), manajemen respons pendaftar, ekspor CSV, dan pengiriman email konfirmasi
+* **Technical Implementation:**
+  1. Merancang skema relasional database MySQL dan migrasi `database/migrations/2026-10-formulir-internal.sql` serta pembaruan `database/schema.sql`:
+     - Menambahkan kolom `registration_mode` (`external` | `internal`) pada tabel `events`.
+     - Membuat tabel terstruktur: `event_forms`, `event_form_questions`, `event_form_responses`, `event_form_answers`, `event_form_versions`, dan `event_form_files`.
+  2. Mengembangkan pustaka validasi dan pemrosesan formulir di `lib/forms/`:
+     - Skema JSON definisi formulir (`definition-schema.ts`) dengan Zod untuk mendukung aneka tipe pertanyaan (teks pendek, teks panjang, pilihan ganda, kotak centang, dropdown, skala linear, tanggal, waktu, nomor telepon, dan unggah berkas).
+     - Mesin validasi respons peserta berbasis aturan wajib, format regex, batas kuota pendaftaran atomik, dan pencegahan duplikasi email (`limit_one_per_email`).
+  3. Membangun lapisan data dan Server Actions:
+     - `lib/data/forms.ts` untuk query definisi form, status pendaftaran, daftar respons, dan download berkas bukti.
+     - `lib/actions/formulir-admin.ts` untuk aksi admin (simpan draf, publikasikan, rollback versi, unduh CSV respons).
+     - `lib/actions/formulir-publik.ts` untuk submit pendaftaran publik, enkripsi token pengeditan respons, dan sanitasi payload.
+     - `lib/email/` mengintegrasikan `nodemailer` untuk pengiriman email bukti pendaftaran otomatis berbasis template HTML/teks.
+  4. Membangun antarmuka pengguna (UI):
+     - Panel Admin Form Builder: `app/(admin-protected)/admin/kegiatan/[id]/formulir/` dan `components/admin/formulir/` dengan drag/reorder, preview real-time, dan pengaturan kuota.
+     - Panel Admin Response Viewer: `app/(admin-protected)/admin/kegiatan/[id]/respons/` dengan tabel respons, pencarian, filter, dan unduh CSV.
+     - Halaman Pendaftaran Publik: `app/(public)/kegiatan/[slug]/daftar/` dan `components/formulir/` dengan desain responsif, ramah mobile, progress bar, dan penanganan galat interaktif.
+  5. Pengujian komprehensif:
+     - Menulis unit test di `tests/unit/forms-builder.test.ts` dan `tests/unit/forms-core.test.ts`.
+     - 112/112 unit test Vitest lulus 100%.
+     - Lulus uji TypeScript strict (`npm run typecheck`) dan ESLint (`npm run lint`) tanpa peringatan.
+     - Lulus kompilasi produksi Next.js 16 standalone Webpack (`next build --webpack`).
+     - Paket deployment cPanel diperbarui via `scripts/pack-standalone.mjs` (`rohkris-next.zip`) dan `scripts/pack-build.ps1` (`rohkris-build.zip`).
+* **Impact:**
+  - Pengurus Rohkris kini memiliki kontrol penuh atas formulir pendaftaran acara langsung di website sekolah tanpa bergantung pada Google Forms pihak ketiga.
+  - Data peserta tersimpan aman di database hosting sendiri dan dapat diekspor langsung ke spreadsheet format CSV.

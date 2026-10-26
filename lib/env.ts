@@ -102,3 +102,41 @@ export function getAdminSecretKey(): string {
   return process.env.ADMIN_SECRET_KEY?.trim() || "";
 }
 
+/**
+ * Folder PRIVAT untuk berkas unggahan peserta formulir internal.
+ * Default: "<folder aplikasi>/storage/form-uploads". Folder ini TIDAK boleh
+ * berada di dalam UPLOAD_DIR (yang disajikan publik lewat /uploads) —
+ * lib/forms/storage.ts menolak bekerja bila keduanya bertumpuk.
+ */
+export function getFormUploadDir(): string {
+  return process.env.FORM_UPLOAD_DIR?.trim() || `${process.cwd()}/storage/form-uploads`;
+}
+
+/** Konfigurasi pengiriman email konfirmasi formulir. */
+export type MailConfig =
+  | { transport: "smtp"; host: string; port: number; secure: boolean; user: string; pass: string; from: string }
+  | { transport: "sendmail"; path: string; from: string };
+
+/**
+ * Membaca konfigurasi email dari env. Null bila belum lengkap — fitur
+ * "kirim salinan jawaban" otomatis dinonaktifkan.
+ *   MAIL_TRANSPORT=smtp     → SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASS
+ *   MAIL_TRANSPORT=sendmail → SENDMAIL_PATH (bawaan /usr/sbin/sendmail)
+ *   MAIL_FROM wajib untuk keduanya.
+ */
+export function getMailConfig(): MailConfig | null {
+  const from = process.env.MAIL_FROM?.trim();
+  const transport = (process.env.MAIL_TRANSPORT?.trim() || "smtp").toLowerCase();
+  if (!from) return null;
+  if (transport === "sendmail") {
+    return { transport: "sendmail", path: process.env.SENDMAIL_PATH?.trim() || "/usr/sbin/sendmail", from };
+  }
+  const host = process.env.SMTP_HOST?.trim();
+  const user = process.env.SMTP_USER?.trim();
+  const pass = process.env.SMTP_PASS ?? "";
+  if (!host || !user || !pass) return null;
+  const port = Number(process.env.SMTP_PORT?.trim() || "465");
+  const secureRaw = process.env.SMTP_SECURE?.trim().toLowerCase();
+  const secure = secureRaw ? secureRaw === "true" || secureRaw === "1" : port === 465;
+  return { transport: "smtp", host, port: Number.isFinite(port) ? port : 465, secure, user, pass, from };
+}

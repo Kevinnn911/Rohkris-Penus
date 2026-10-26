@@ -36,13 +36,11 @@ export default async function KelolaAksesPage() {
   const jumlahAktif = daftarAdmin.filter((admin) => admin.is_active).length;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-12 animate-fade-up">
+    <div className="mx-auto max-w-5xl space-y-12">
       <header className="flex flex-wrap items-end justify-between gap-6">
         <div className="max-w-2xl">
-          <p className="inline-flex items-center rounded-full bg-gold-300 px-3.5 py-1 text-sm font-medium text-navy-950">
-            Akses Panel
-          </p>
-          <h1 className="mt-4 text-4xl font-bold leading-[1.05] tracking-[-0.04em] text-navy-950 text-balance sm:text-5xl">
+          <p className="text-sm font-medium text-navy-600">Akses Panel</p>
+          <h1 className="mt-2 text-4xl font-bold leading-[1.05] tracking-display text-navy-950 text-balance sm:text-5xl">
             Kelola Admin
           </h1>
           <p className="mt-3 text-base leading-relaxed text-navy-600 sm:text-lg">
@@ -50,7 +48,7 @@ export default async function KelolaAksesPage() {
           </p>
         </div>
         <p className="inline-flex min-h-11 items-center gap-2.5 rounded-full bg-white py-1.5 pl-1.5 pr-4 text-sm text-navy-600 ring-1 ring-inset ring-navy-200">
-          <span aria-hidden="true" className="grid size-8 place-items-center rounded-full bg-gold-300 text-navy-950">
+          <span aria-hidden="true" className="grid size-8 place-items-center rounded-full bg-navy-100 text-navy-950">
             <IconUsers className="size-4" />
           </span>
           <span>
@@ -69,7 +67,7 @@ export default async function KelolaAksesPage() {
             <IconShield className="size-5" />
           </span>
           <div>
-            <h2 id="judul-daftar-admin" className="text-lg font-bold tracking-[-0.02em] text-navy-950">
+            <h2 id="judul-daftar-admin" className="text-lg font-bold tracking-heading text-navy-950">
               Daftar admin
             </h2>
             <p className="text-sm text-navy-500">Pengguna yang memiliki akses ke panel ini.</p>
@@ -96,7 +94,7 @@ export default async function KelolaAksesPage() {
                         aria-hidden="true"
                         className={
                           admin.role === "super_admin"
-                            ? "grid size-11 shrink-0 place-items-center rounded-full bg-gold-300 text-sm font-bold text-navy-950"
+                            ? "grid size-11 shrink-0 place-items-center rounded-full bg-navy-950 text-sm font-semibold text-white"
                             : "grid size-11 shrink-0 place-items-center rounded-full bg-navy-100 text-sm font-bold text-navy-800"
                         }
                       >
@@ -148,11 +146,11 @@ export default async function KelolaAksesPage() {
 
       <section aria-labelledby="judul-tambah-admin" className="space-y-5">
         <div className="flex items-center gap-3">
-          <span aria-hidden="true" className={`${ikonBulat} bg-gold-300`}>
+          <span aria-hidden="true" className={`${ikonBulat} bg-navy-100`}>
             <IconPlus className="size-5" />
           </span>
           <div>
-            <h2 id="judul-tambah-admin" className="text-2xl font-bold tracking-[-0.03em] text-navy-950">
+            <h2 id="judul-tambah-admin" className="text-2xl font-bold tracking-heading text-navy-950">
               Tambah Admin
             </h2>
             <p className="text-sm text-navy-600">Buat akun login untuk pengurus panel.</p>
@@ -183,7 +181,7 @@ export default async function KelolaAksesPage() {
                 <li key={index} className="flex gap-3">
                   <span
                     aria-hidden="true"
-                    className="grid size-7 shrink-0 place-items-center rounded-full bg-gold-300 text-xs font-bold text-navy-950"
+                    className="grid size-7 shrink-0 place-items-center rounded-full bg-navy-100 text-xs font-semibold text-navy-950 tabular-nums"
                   >
                     {index + 1}
                   </span>

@@ -8,7 +8,6 @@ import {
   IconArrowLeft,
   IconArrowRight,
   IconCalendar,
-  IconCross,
   IconInfo,
 } from "@/components/ui/Icons";
 import { getNewsBySlug, getPublishedEventById, getPublishedNewsSlugs } from "@/lib/data/public";
@@ -85,10 +84,6 @@ export default async function DetailBeritaPage({
               <time dateTime={toDateTimeAttr(post.published_at)}>{formatTanggal(post.published_at)}</time>
             </span>
           ) : null}
-          <span className="inline-flex min-h-9 items-center gap-2 rounded-full bg-white/70 px-4 text-navy-700 ring-1 ring-inset ring-navy-200/80 backdrop-blur">
-            <IconCross className="size-4" />
-            Rohkris Pelita Nusantara
-          </span>
         </div>
       </PageHeader>
 
@@ -99,7 +94,7 @@ export default async function DetailBeritaPage({
             <img
               src={post.cover_image_url}
               alt={`Sampul berita ${post.title}`}
-              className="aspect-[16/9] w-full rounded-[1.5rem] object-cover"
+              className="aspect-[16/9] w-full rounded-panel-inner object-cover"
             />
           </div>
         </div>
@@ -126,18 +121,18 @@ export default async function DetailBeritaPage({
         {eventTerkait ? (
           <aside
             aria-labelledby="judul-kegiatan-terkait"
-            className="mt-8 rounded-[1.75rem] bg-white p-5 shadow-float sm:p-7"
+            className="mt-8 rounded-bar border border-navy-200/80 bg-white p-5 sm:p-7"
           >
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-start gap-4">
-                <span className="grid size-11 shrink-0 place-items-center rounded-full bg-gold-300 text-navy-950">
+              <div className="flex min-w-0 items-start gap-4">
+                <span className="grid size-11 shrink-0 place-items-center rounded-full bg-navy-50 text-navy-700 ring-1 ring-inset ring-navy-200/80">
                   <IconCalendar className="size-5" />
                 </span>
-                <div>
-                  <h2 id="judul-kegiatan-terkait" className="text-sm font-semibold text-navy-950">
-                    <span className="label-dot">Kegiatan terkait</span>
+                <div className="min-w-0">
+                  <h2 id="judul-kegiatan-terkait" className="text-sm font-medium text-navy-600">
+                    Kegiatan terkait
                   </h2>
-                  <p className="mt-1 text-xl font-bold leading-snug tracking-[-0.02em] text-navy-950 text-balance">
+                  <p className="mt-1 text-xl font-bold leading-snug tracking-heading text-navy-950 text-balance [overflow-wrap:anywhere]">
                     {eventTerkait.title}
                   </p>
                 </div>
@@ -157,13 +152,13 @@ export default async function DetailBeritaPage({
         <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-navy-200/80 pt-8">
           <Link
             href="/berita"
-            className="group inline-flex min-h-11 items-center gap-2 rounded-full bg-white pl-1.5 pr-5 text-sm font-medium text-navy-950 ring-1 ring-inset ring-navy-200 transition-colors hover:bg-navy-50 hover:ring-navy-300"
+            className="pressable group inline-flex min-h-11 items-center gap-2 rounded-full bg-white pl-1.5 pr-5 text-sm font-medium text-navy-950 ring-1 ring-inset ring-navy-200 hover:bg-navy-50 hover:ring-navy-300"
           >
             <span
               aria-hidden="true"
-              className="grid size-8 place-items-center rounded-full bg-navy-100 transition-colors group-hover:bg-gold-300"
+              className="grid size-8 place-items-center rounded-full bg-navy-100 transition-colors duration-200 group-hover:bg-navy-200"
             >
-              <IconArrowLeft className="size-4 transition-transform duration-300 group-hover:-translate-x-0.5" />
+              <IconArrowLeft className="size-4 transition-transform duration-200 ease-out group-hover:-translate-x-0.5" />
             </span>
             Kembali ke daftar berita
           </Link>
@@ -172,7 +167,7 @@ export default async function DetailBeritaPage({
             className="group inline-flex min-h-11 items-center gap-2 px-1 text-sm font-medium text-navy-950 underline decoration-navy-300 underline-offset-[6px] transition-colors hover:decoration-navy-950"
           >
             Lihat dokumentasi kegiatan
-            <IconArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+            <IconArrowRight className="size-4 transition-transform duration-200 ease-out group-hover:translate-x-0.5" />
           </Link>
         </div>
       </div>

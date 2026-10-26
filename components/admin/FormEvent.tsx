@@ -62,6 +62,9 @@ export function FormEvent({
   const [slug, setSlug] = useState(event?.slug ?? "");
   const [slugDisentuh, setSlugDisentuh] = useState(Boolean(event?.slug));
   const [coverUrl, setCoverUrl] = useState(event?.cover_image_url ?? "");
+  const [modePendaftaran, setModePendaftaran] = useState<"external" | "internal">(
+    event?.registration_mode ?? "external",
+  );
 
   const err = state && !state.ok ? state.fieldErrors : undefined;
 
@@ -189,9 +192,49 @@ export function FormEvent({
 
       <FieldGroup
         judul="Pendaftaran"
-        deskripsi="Tombol “Daftar Sekarang” hanya muncul bila status Dibuka DAN tautan pendaftaran terisi dengan https://"
+        deskripsi="Tombol “Daftar Sekarang” hanya muncul bila status Dibuka dan formulirnya siap: tautan https:// untuk formulir luar, atau formulir internal yang sudah berisi pertanyaan."
         ikon={<IconUsers />}
       >
+        <fieldset>
+          <legend className="text-sm font-semibold text-navy-950">Jenis formulir pendaftaran</legend>
+          <div className="mt-2 grid gap-3 sm:grid-cols-2">
+            {(
+              [
+                {
+                  value: "external",
+                  judul: "Formulir luar",
+                  keterangan: "Tautan Google Form atau layanan lain. Data tersimpan di layanan tersebut.",
+                },
+                {
+                  value: "internal",
+                  judul: "Formulir internal",
+                  keterangan: event
+                    ? "Dibuat di tab Formulir. Respons tersimpan di server dan bisa dilihat di tab Respons."
+                    : "Simpan kegiatan dulu, lalu buat pertanyaannya di tab Formulir.",
+                },
+              ] as const
+            ).map((opsi) => (
+              <label
+                key={opsi.value}
+                className="relative flex cursor-pointer gap-3 rounded-2xl border border-navy-200 bg-white p-4 transition-[border-color,background-color] duration-150 ease-out hover:border-navy-300 has-checked:border-navy-950 has-checked:bg-gold-50 has-focus-visible:ring-4 has-focus-visible:ring-gold-200"
+              >
+                <input
+                  type="radio"
+                  name="registration_mode"
+                  value={opsi.value}
+                  checked={modePendaftaran === opsi.value}
+                  onChange={() => setModePendaftaran(opsi.value)}
+                  className="mt-1 size-4 shrink-0 accent-navy-950"
+                />
+                <span>
+                  <span className="block text-md font-semibold text-navy-950">{opsi.judul}</span>
+                  <span className="mt-0.5 block text-sm leading-relaxed text-navy-600">{opsi.keterangan}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
         <SelectField
           id="registration_status"
           name="registration_status"
@@ -201,15 +244,18 @@ export function FormEvent({
           error={err?.registration_status}
         />
 
-        <TextField
-          id="registration_url"
-          name="registration_url"
-          label="Tautan PENDAFTARAN (Google Forms)"
-          type="url"
-          defaultValue={event?.registration_url}
-          bantuan="Tautan tujuan tombol Daftar. Wajib diawali https://. Jangan diisi tautan poster."
-          error={err?.registration_url}
-        />
+        {/* Tetap dirender (disembunyikan) pada mode internal agar tautan lama tidak hilang saat beralih. */}
+        <div hidden={modePendaftaran === "internal"}>
+          <TextField
+            id="registration_url"
+            name="registration_url"
+            label="Tautan PENDAFTARAN (Google Forms)"
+            type="url"
+            defaultValue={event?.registration_url}
+            bantuan="Tautan tujuan tombol Daftar. Wajib diawali https://. Jangan diisi tautan poster."
+            error={err?.registration_url}
+          />
+        </div>
 
         <div className="grid gap-5 sm:grid-cols-2">
           <TextField

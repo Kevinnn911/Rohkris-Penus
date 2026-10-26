@@ -74,34 +74,60 @@
   --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
 
-  /* Radius — dipakai sebagai utilitas `rounded-card`, `rounded-panel`, `rounded-hero`. */
+  /* Ukuran & tracking yang dulu berupa nilai arbitrer berulang. */
+  --text-md: 0.9375rem;
+  --text-md--line-height: 1.5rem;
+  --tracking-display: -0.04em; /* judul besar (h1/hero) */
+  --tracking-heading: -0.025em; /* judul seksi & kartu */
+
+  /*
+   * Radius — utilitas `rounded-card`, `rounded-panel`, `rounded-hero`, dst.
+   * `inner` = card − padding kartu (p-2.5) agar sudut dalam konsentris.
+   */
+  --radius-inner: 0.875rem;
+  --radius-panel-inner: 1.375rem; /* panel − p-2.5 */
   --radius-card: 1.5rem;
+  --radius-bar: 1.75rem; /* navbar & bar pencarian */
   --radius-panel: 2rem;
   --radius-hero: 2.75rem;
 
-  /* Bayangan lembut dan lebar — kartu terasa melayang ringan. */
+  /* Bayangan lembut — satu keluarga, tidak ada glow berwarna. */
   --shadow-soft: 0 1px 2px rgb(13 13 15 / 0.04), 0 10px 30px -18px rgb(13 13 15 / 0.18);
-  --shadow-lift: 0 2px 6px rgb(13 13 15 / 0.04), 0 30px 60px -30px rgb(13 13 15 / 0.28);
+  --shadow-lift: 0 1px 3px rgb(13 13 15 / 0.05), 0 18px 40px -24px rgb(13 13 15 / 0.24);
   --shadow-float: 0 24px 70px -24px rgb(13 13 15 / 0.22), 0 2px 8px rgb(13 13 15 / 0.04);
-  --shadow-glow: 0 10px 28px -12px rgb(207 194 43 / 0.75);
+  --shadow-button: 0 1px 2px rgb(13 13 15 / 0.16), 0 6px 16px -10px rgb(13 13 15 / 0.5);
+  --shadow-modal: 0 30px 80px -20px rgb(0 0 0 / 0.6);
 
+  /*
+   * Kurva gerak (lihat skill emil-design-eng). Mengganti `ease-out`/`ease-in-out`
+   * bawaan Tailwind yang terlalu lemah — semua utilitas `ease-out` ikut memakai ini.
+   */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  /* Dipertahankan untuk carousel kategori (timing-nya sudah disetel; lihat Perbaikan.md). */
   --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
 
-  --animate-fade-up: fade-up 0.8s var(--ease-out-soft) both;
+  --animate-fade-up: fade-up 0.45s var(--ease-out) both;
+  --animate-fade-in: fade-in 0.15s ease both;
   --animate-shimmer: shimmer 1.6s linear infinite;
-  --animate-float: float 7s ease-in-out infinite;
-  --animate-slide-left: slide-left 0.38s var(--ease-out-soft) both;
-  --animate-slide-right: slide-right 0.38s var(--ease-out-soft) both;
-  --animate-card-in: card-in 0.35s var(--ease-out-soft) both;
 
   @keyframes fade-up {
     from {
       opacity: 0;
-      transform: translateY(14px);
+      transform: translateY(8px);
     }
     to {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
     }
   }
 
@@ -111,49 +137,6 @@
     }
     to {
       background-position: 200% 0;
-    }
-  }
-
-  @keyframes float {
-    0%,
-    100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-8px);
-    }
-  }
-
-  @keyframes slide-left {
-    from {
-      opacity: 0.15;
-      transform: translateX(18px) scale(0.97);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0) scale(1);
-    }
-  }
-
-  @keyframes slide-right {
-    from {
-      opacity: 0.15;
-      transform: translateX(-18px) scale(0.97);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0) scale(1);
-    }
-  }
-
-  @keyframes card-in {
-    from {
-      opacity: 0.25;
-      transform: scale(0.95);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
     }
   }
 }
@@ -171,52 +154,38 @@
     linear-gradient(180deg, #f4f5f6 0%, #e7eaee 55%, #dfe3e8 100%);
 }
 
-/* Latar gelap "tinta" — untuk footer dan pita CTA. */
-@utility bg-aurora {
-  background-color: var(--color-navy-950);
-  background-image:
-    radial-gradient(50% 60% at 10% 0%, rgb(246 240 106 / 0.14), transparent 70%),
-    radial-gradient(45% 55% at 95% 100%, rgb(255 255 255 / 0.06), transparent 70%);
-}
-
-/* Kisi tipis sebagai tekstur di atas latar gelap. */
-@utility bg-grid-faint {
-  background-image:
-    linear-gradient(to right, rgb(255 255 255 / 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(255 255 255 / 0.04) 1px, transparent 1px);
-  background-size: 56px 56px;
-}
-
-/* Sorotan stabilo di belakang teks (seperti coretan kuning di referensi). */
-@utility text-highlight {
-  background-image: linear-gradient(transparent 58%, var(--color-gold-300) 58%, var(--color-gold-300) 92%, transparent 92%);
-  padding-inline: 0.08em;
-}
-
-/* Kompatibilitas: dulu berupa teks bergradasi emas, kini sorotan stabilo. */
-@utility text-gold-gradient {
-  background-image: linear-gradient(transparent 58%, var(--color-gold-300) 58%, var(--color-gold-300) 92%, transparent 92%);
-  padding-inline: 0.08em;
+/*
+ * Umpan balik tekan untuk elemen yang bisa diklik/ditap (tombol, tautan ikon, pil).
+ * Mengganti `transition-colors`: warna tetap bertransisi, plus skala 0.97 saat ditekan
+ * supaya antarmuka terasa "mendengar" sentuhan. Skala adalah properti `scale`
+ * (bukan `transform`) sehingga aman dipadukan dengan utilitas translate.
+ */
+@utility pressable {
+  transition-property: color, background-color, border-color, box-shadow, opacity, scale;
+  transition-duration: 160ms;
+  transition-timing-function: var(--ease-out);
+  &:active:not(:disabled, [aria-disabled="true"]) {
+    scale: 0.97;
+  }
 }
 
 /*
- * Titik kuning kecil di DEPAN label, sejajar di tengah baris teks.
- * (Sebelumnya lingkaran ditumpuk di belakang huruf pertama — posisinya
- * bergeser mengikuti bentuk huruf sehingga tampak tidak rapi.)
- * Ukuran ikut font-size label agar proporsional di semua tempat.
+ * Kartu yang seluruh permukaannya adalah tautan (pola `after:absolute after:inset-0`).
+ * Hover hanya menebalkan tepi & bayangan — tanpa melompat naik; ditekan sedikit mengecil.
  */
-@utility label-dot {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55em;
-  &::before {
-    content: "";
-    flex-shrink: 0;
-    width: 0.55em;
-    height: 0.55em;
-    border-radius: 9999px;
-    background: var(--color-gold-400);
-    box-shadow: 0 0 0 0.2em var(--color-gold-100);
+@utility card-interactive {
+  transition-property: border-color, box-shadow, scale;
+  transition-duration: 200ms;
+  transition-timing-function: var(--ease-out);
+  @media (hover: hover) {
+    &:hover {
+      border-color: var(--color-navy-300);
+      box-shadow: var(--shadow-lift);
+    }
+  }
+  &:active,
+  &:has(a:active, button:active) {
+    scale: 0.985;
   }
 }
 
@@ -228,23 +197,59 @@
   }
 }
 
-/* Hormati prefers-reduced-motion (PRD §9 aksesibilitas) */
+/*
+ * Hormati prefers-reduced-motion (PRD §9 aksesibilitas).
+ * Gerakan (geser, skala, carousel) dihentikan, tetapi kemunculan elemen tetap
+ * diberi pudar singkat agar perubahan tidak terasa patah.
+ */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  .animate-fade-up {
+    animation: var(--animate-fade-in) !important;
+  }
+  .animate-shimmer {
+    animation: none !important;
   }
 }
 
 html {
   scroll-behavior: smooth;
+  /* Tanpa kilatan abu-abu saat ditap di ponsel — umpan balik datang dari :active. */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Tap langsung tanpa jeda 300ms; label kontrol tidak ikut terseleksi saat ditekan lama. */
+a,
+button,
+summary,
+label,
+[role="button"] {
+  touch-action: manipulation;
+}
+button,
+[role="button"] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* iOS memperbesar halaman bila fokus ke input < 16px. */
+@media (pointer: coarse) {
+  input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]),
+  select,
+  textarea {
+    font-size: 1rem;
+  }
 }
 
 body {
+  /* viewport-fit=cover: jaga konten tetap di luar poni saat ponsel dalam posisi lanskap. */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
   background-color: var(--color-ivory-100);
   color: var(--color-navy-900);
   -webkit-font-smoothing: antialiased;
@@ -260,11 +265,9 @@ body {
 :focus-visible {
   outline: 3px solid var(--color-navy-950);
   outline-offset: 2px;
-  border-radius: 6px;
 }
 
 /* Di atas latar gelap (footer, pita CTA, lightbox), cincin fokus berganti kuning agar tetap terlihat. */
-.bg-aurora :focus-visible,
 .bg-navy-950 :focus-visible {
   outline-color: var(--color-gold-300);
 }

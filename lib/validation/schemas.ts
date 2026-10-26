@@ -107,6 +107,10 @@ export const eventFormSchema = z
     registration_status: z.enum(["not_open", "open", "closed", "external_only"], {
       error: "Pilih status pendaftaran.",
     }),
+    // Bawaan "external" = perilaku lama (sama dengan DEFAULT kolom di database).
+    registration_mode: z
+      .enum(["external", "internal"], { error: "Pilih jenis formulir pendaftaran." })
+      .default("external"),
     cost_info: optionalText(500, "Informasi biaya"),
     dress_code: optionalText(300, "Dress code"),
     participant_rules: optionalText(2000, "Ketentuan peserta"),
@@ -136,11 +140,23 @@ export const eventFormSchema = z
   )
   .refine(
     // Jangan biarkan admin menerbitkan "pendaftaran dibuka" tanpa tautan.
-    (data) => data.registration_status !== "open" || Boolean(data.registration_url),
+    // Formulir internal tidak butuh tautan luar.
+    (data) =>
+      data.registration_mode === "internal" ||
+      data.registration_status !== "open" ||
+      Boolean(data.registration_url),
     {
       error:
         "Isi tautan pendaftaran bila status pendaftaran dibuka, atau ubah statusnya.",
       path: ["registration_url"],
+    },
+  )
+  .refine(
+    // "Tanpa pendaftaran / langsung hadir" tidak masuk akal untuk formulir internal.
+    (data) => data.registration_mode !== "internal" || data.registration_status !== "external_only",
+    {
+      error: "Formulir internal butuh status “Dibuka”, “Belum dibuka”, atau “Ditutup”.",
+      path: ["registration_status"],
     },
   );
 

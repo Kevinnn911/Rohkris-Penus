@@ -20,11 +20,11 @@ export function FormTambahAdmin() {
   return (
     <form
       action={formAction}
-      // Kartu putih melayang; gaya label & field (label-dot, fokus tinta) sudah dari Fields.tsx.
-      className="space-y-5 rounded-[1.75rem] bg-white p-6 shadow-float sm:p-8"
+      // Kartu putih bertepi; gaya label & field (fokus tinta) sudah dari Fields.tsx.
+      className="space-y-5 rounded-bar border border-navy-200/80 bg-white p-6 sm:p-8"
     >
       <div>
-        <h3 className="text-lg font-bold tracking-[-0.02em] text-navy-950">Formulir admin baru</h3>
+        <h3 className="text-lg font-bold tracking-heading text-navy-950">Formulir admin baru</h3>
         <p className="mt-1 text-sm text-navy-500">Semua isian bertanda * wajib diisi.</p>
       </div>
 

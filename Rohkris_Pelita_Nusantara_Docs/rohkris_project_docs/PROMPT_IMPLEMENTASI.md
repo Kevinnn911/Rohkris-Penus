@@ -21,7 +21,7 @@ Contoh kegiatan yang akan dikelola: Natal, Paskah, ibadah rutin, persekutuan, re
 5. Mengeklik tombol **Daftar Sekarang** untuk membuka `registration_url` yang diatur admin—biasanya Google Forms atau tautan Google Drive—di tab baru.
 6. Melihat galeri serta berita/recap kegiatan yang sudah terlaksana.
 
-Jangan menganggap pendaftaran sukses atau menyimpan data pendaftar ke database website karena proses pendaftaran berlangsung di layanan eksternal.
+Untuk kegiatan bermode formulir luar: jangan menganggap pendaftaran sukses atau menyimpan data pendaftar ke database website karena proses pendaftaran berlangsung di layanan eksternal. Kegiatan bermode **formulir internal** (fitur tambahan Oktober 2026, lihat `lib/forms/` dan PRD §6.3) menyimpan respons di database website dengan kontrol akses admin, persetujuan peserta, dan berkas privat.
 
 ### 2. Teknologi
 

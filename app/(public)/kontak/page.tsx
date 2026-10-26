@@ -29,9 +29,9 @@ const SOSIAL = [
   { key: "whatsapp_url", label: "WhatsApp", Icon: IconChat },
 ] as const;
 
-/** Ikon dalam lingkaran kuning — dekoratif. */
+/** Ikon dalam lingkaran netral — dekoratif. */
 const LINGKARAN =
-  "grid size-11 shrink-0 place-items-center rounded-full bg-gold-300 text-navy-950";
+  "grid size-11 shrink-0 place-items-center rounded-full bg-navy-50 text-navy-700 ring-1 ring-inset ring-navy-200/80";
 
 export default async function KontakPage() {
   const settings = await getSiteSettings();
@@ -64,7 +64,7 @@ export default async function KontakPage() {
                       <IconMail className="size-5" />
                     </span>
                     <span className="mt-6 block text-lg font-semibold text-navy-950">
-                      <span className="label-dot">Email</span>
+                      Email
                     </span>
                   </dt>
                   <dd className="mt-1.5">
@@ -85,7 +85,7 @@ export default async function KontakPage() {
                       <IconPhone className="size-5" />
                     </span>
                     <span className="mt-6 block text-lg font-semibold text-navy-950">
-                      <span className="label-dot">Telepon / WhatsApp</span>
+                      Telepon / WhatsApp
                     </span>
                   </dt>
                   <dd className="mt-1.5 flex min-h-11 items-center break-words text-navy-600">
@@ -111,13 +111,13 @@ export default async function KontakPage() {
                     href={settings[key]}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex h-full min-h-[9.5rem] flex-col justify-between rounded-card border border-navy-200/80 bg-white p-5 transition-[box-shadow,transform] duration-300 hover:-translate-y-1 hover:shadow-lift"
+                    className="card-interactive group flex h-full min-h-[9.5rem] flex-col justify-between rounded-card border border-navy-200/80 bg-white p-5"
                   >
                     <span className="flex items-start justify-between gap-3">
                       <Icon className="size-10 text-navy-950" strokeWidth={1.4} />
                       <span
                         aria-hidden="true"
-                        className="grid size-9 place-items-center rounded-full bg-white text-navy-950 ring-1 ring-inset ring-navy-200 transition-colors group-hover:bg-gold-300 group-hover:ring-gold-300"
+                        className="grid size-9 place-items-center rounded-full bg-white text-navy-950 ring-1 ring-inset ring-navy-200 transition-colors duration-200 group-hover:bg-navy-100"
                       >
                         <IconArrowUpRight className="size-4" />
                       </span>
@@ -154,14 +154,14 @@ export default async function KontakPage() {
         {settings.school_info ? (
           <section
             aria-labelledby="judul-sekolah"
-            className="flex flex-col gap-5 rounded-[1.75rem] bg-white p-6 shadow-float sm:flex-row sm:items-start sm:p-8"
+            className="flex flex-col gap-5 rounded-bar border border-navy-200/80 bg-white p-6 sm:flex-row sm:items-start sm:p-8"
           >
             <span aria-hidden="true" className={LINGKARAN}>
               <IconMapPin className="size-5" />
             </span>
             <div className="min-w-0">
               <h2 id="judul-sekolah" className="text-lg font-semibold text-navy-950">
-                <span className="label-dot">Sekolah</span>
+                Sekolah
               </h2>
               <p className="mt-2 whitespace-pre-line leading-relaxed text-navy-600">
                 {settings.school_info}

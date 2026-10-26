@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  canEditResponse,
   canShowRegistrationCta,
+  getRegistrationCta,
+  getRegistrationLabel,
   getRegistrationState,
   isPastEvent,
   isValidRegistrationUrl,
@@ -153,5 +156,49 @@ describe("canShowRegistrationCta — aturan paling kritis", () => {
     ],
   ])("tidak menampilkan CTA ketika %s", (_label, event) => {
     expect(canShowRegistrationCta(event, NOW)).toBe(false);
+  });
+});
+
+describe("formulir internal", () => {
+  const form = { questionCount: 3, quota: null, responseCount: 0 };
+  const internal = (overrides: Partial<EventRegistrationInput> = {}) =>
+    makeEvent({ registration_mode: "internal", registration_url: null, form, ...overrides });
+
+  it("terbuka tanpa tautan luar bila formulir berisi pertanyaan", () => {
+    expect(getRegistrationState(internal(), NOW)).toBe("daftar_terbuka");
+    expect(canShowRegistrationCta(internal(), NOW)).toBe(true);
+    expect(getRegistrationCta({ ...internal(), slug: "retreat" }, NOW)).toEqual({
+      href: "/kegiatan/retreat/daftar",
+      external: false,
+    });
+  });
+
+  it("tanpa pendaftaran bila formulir belum dibuat atau kosong", () => {
+    expect(getRegistrationState(internal({ form: null }), NOW)).toBe("tanpa_pendaftaran");
+    expect(getRegistrationState(internal({ form: { ...form, questionCount: 0 } }), NOW)).toBe("tanpa_pendaftaran");
+  });
+
+  it("kuota penuh menutup pendaftaran tetapi tidak menghalangi ubah jawaban", () => {
+    const penuh = internal({ form: { ...form, quota: 2, responseCount: 2 } });
+    expect(getRegistrationState(penuh, NOW)).toBe("kuota_penuh");
+    expect(getRegistrationLabel("kuota_penuh").text).toBe("Kuota Penuh");
+    expect(getRegistrationCta({ ...penuh, slug: "x" }, NOW)).toBeNull();
+    expect(canEditResponse(penuh, NOW)).toBe(true);
+    expect(getRegistrationState(internal({ form: { ...form, quota: 2, responseCount: 1 } }), NOW)).toBe("daftar_terbuka");
+  });
+
+  it("jadwal & status kegiatan tetap berlaku pada mode internal", () => {
+    const tutup = internal({ registration_close_at: "2026-06-01T00:00:00.000Z" });
+    expect(getRegistrationState(tutup, NOW)).toBe("pendaftaran_ditutup");
+    expect(canEditResponse(tutup, NOW)).toBe(false);
+    expect(getRegistrationState(internal({ status: "cancelled" }), NOW)).toBe("dibatalkan");
+    expect(getRegistrationState(internal({ registration_status: "closed" }), NOW)).toBe("pendaftaran_ditutup");
+  });
+
+  it("mode eksternal tidak terpengaruh data formulir; ubah jawaban hanya untuk internal", () => {
+    const eksternal = makeEvent({ registration_mode: "external", form: { ...form, quota: 1, responseCount: 5 } });
+    expect(getRegistrationState(eksternal, NOW)).toBe("daftar_terbuka");
+    expect(getRegistrationCta({ ...eksternal, slug: "x" }, NOW)).toEqual({ href: "https://forms.gle/contoh", external: true });
+    expect(canEditResponse(eksternal, NOW)).toBe(false);
   });
 });

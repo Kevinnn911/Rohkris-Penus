@@ -55,7 +55,7 @@ export default async function BeritaPage() {
                 title="Kabar Terkini"
                 description="Recap kegiatan yang paling baru dipublikasikan."
               />
-              <div className="mt-10 animate-fade-up">
+              <div className="mt-10">
                 <BeritaUtama post={utama} />
               </div>
             </section>
@@ -104,7 +104,7 @@ function SampulBerita({ post, className }: { post: NewsPostRow; className?: stri
         src={post.cover_image_url}
         alt={`Sampul berita ${post.title}`}
         loading="lazy"
-        className={`size-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05] ${className ?? ""}`}
+        className={`size-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03] ${className ?? ""}`}
       />
     );
   }
@@ -119,8 +119,8 @@ function SampulBerita({ post, className }: { post: NewsPostRow; className?: stri
 /** Kartu berita pertama — besar dan horizontal (gambar kiri, teks kanan). */
 function BeritaUtama({ post }: { post: NewsPostRow }) {
   return (
-    <article className="group relative grid gap-2 rounded-panel border border-navy-200/80 bg-white p-2.5 transition-[box-shadow,transform,border-color] duration-300 ease-out hover:-translate-y-1 hover:border-navy-300 hover:shadow-lift lg:grid-cols-12 lg:gap-4">
-      <div className="relative aspect-[16/10] overflow-hidden rounded-[1.5rem] bg-navy-100 lg:col-span-7 lg:aspect-auto lg:min-h-[26rem]">
+    <article className="card-interactive group relative grid gap-2 rounded-panel border border-navy-200/80 bg-white p-2.5 lg:grid-cols-12 lg:gap-4">
+      <div className="relative aspect-[16/10] overflow-hidden rounded-panel-inner bg-navy-100 lg:col-span-7 lg:aspect-auto lg:min-h-[26rem]">
         <SampulBerita post={post} className="lg:absolute lg:inset-0" />
         <Tag tone="kuning" className="absolute left-4 top-4 shadow-sm">
           Terbaru
@@ -129,7 +129,7 @@ function BeritaUtama({ post }: { post: NewsPostRow }) {
 
       <div className="flex flex-col px-4 pb-4 pt-4 sm:px-6 sm:pb-6 lg:col-span-5 lg:py-8 lg:pl-4 lg:pr-8">
         <TanggalTerbit value={post.published_at} />
-        <h3 className="mt-5 text-3xl font-bold leading-[1.1] tracking-[-0.035em] text-navy-950 text-balance sm:text-[2.5rem]">
+        <h3 className="mt-5 text-3xl font-bold leading-[1.1] tracking-display text-navy-950 text-balance [overflow-wrap:anywhere] sm:text-[2.5rem]">
           <Link
             href={`/berita/${post.slug}`}
             className="after:absolute after:inset-0 after:rounded-panel"
@@ -147,7 +147,7 @@ function BeritaUtama({ post }: { post: NewsPostRow }) {
             aria-hidden="true"
             className="grid size-8 place-items-center rounded-full bg-gold-300 text-navy-950"
           >
-            <IconArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+            <IconArrowRight className="size-4 transition-transform duration-200 ease-out group-hover:translate-x-0.5" />
           </span>
         </span>
       </div>
@@ -158,13 +158,13 @@ function BeritaUtama({ post }: { post: NewsPostRow }) {
 /** Kartu grid untuk berita lainnya — gaya kartu kegiatan (bingkai tipis, gambar membulat). */
 function KartuBerita({ post }: { post: NewsPostRow }) {
   return (
-    <article className="group relative flex w-full flex-col rounded-card border border-navy-200/80 bg-white p-2.5 transition-[box-shadow,transform,border-color] duration-300 ease-out hover:-translate-y-1 hover:border-navy-300 hover:shadow-lift">
-      <div className="relative aspect-[4/3] overflow-hidden rounded-[1.1rem] bg-navy-100">
+    <article className="card-interactive group relative flex w-full flex-col rounded-card border border-navy-200/80 bg-white p-2.5">
+      <div className="relative aspect-[4/3] overflow-hidden rounded-inner bg-navy-100">
         <SampulBerita post={post} />
       </div>
       <div className="flex flex-1 flex-col px-3 pb-3 pt-4">
         <TanggalTerbit value={post.published_at} />
-        <h3 className="mt-3 text-lg font-semibold leading-snug tracking-[-0.015em] text-navy-950 text-balance">
+        <h3 className="mt-3 text-lg font-semibold leading-snug tracking-heading text-navy-950 text-balance [overflow-wrap:anywhere]">
           <Link href={`/berita/${post.slug}`} className="after:absolute after:inset-0 after:rounded-card">
             {post.title}
           </Link>
@@ -177,9 +177,9 @@ function KartuBerita({ post }: { post: NewsPostRow }) {
           <span className="text-sm font-medium text-navy-950">Baca selengkapnya</span>
           <span
             aria-hidden="true"
-            className="grid size-10 place-items-center rounded-full bg-navy-100 text-navy-950 transition-colors duration-300 group-hover:bg-gold-300"
+            className="grid size-10 shrink-0 place-items-center rounded-full bg-navy-100 text-navy-950 transition-colors duration-200 group-hover:bg-navy-200"
           >
-            <IconArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+            <IconArrowRight className="size-4 transition-transform duration-200 ease-out group-hover:translate-x-0.5" />
           </span>
         </div>
       </div>

@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   // "Setup Node.js App" — tidak perlu node_modules lengkap di server.
   output: "standalone",
   // Driver MySQL dimuat langsung dari node_modules, tidak di-bundle.
-  serverExternalPackages: ["mysql2"],
+  serverExternalPackages: ["mysql2", "nodemailer"],
   experimental: {
     serverActions: {
       // Unggahan poster/foto hingga 5 MB (lib/validation/schemas.ts) +

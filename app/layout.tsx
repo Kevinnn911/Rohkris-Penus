@@ -10,7 +10,7 @@ import "./globals.css";
 // Poppins — geometris dan tegas; dipakai untuk judul maupun isi.
 const poppins = Poppins({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
+  weight: ["300", "400", "500", "600", "700"],
   variable: "--font-poppins",
   display: "swap",
 });
@@ -86,6 +86,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#f3f3f1",
+  // Wajib agar env(safe-area-inset-*) bernilai nyata di iPhone berponi / home indicator.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

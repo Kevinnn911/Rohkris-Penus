@@ -1,43 +1,17 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { IconAlert, IconCheck } from "@/components/ui/Icons";
 import type { ActionResult } from "@/lib/actions/helpers";
 import { cn } from "@/lib/cn";
 
-type VarianTombol = "primary" | "secondary" | "danger";
-
-/**
- * Gaya tombol aksi ringkas (dipakai di baris tabel / kartu admin).
- * Varian "danger" sengaja dibuat lembut (teks merah di atas putih) agar daftar
- * tidak dipenuhi blok merah; tombol konfirmasi di dialog tetap merah penuh.
- */
-const kelasVarianKecil: Record<VarianTombol, string> = {
-  // Pill hitam — aksi utama (seperti "Sign up" pada referensi).
-  primary: "bg-navy-950 text-white hover:bg-navy-800",
-  // Pill putih bergaris — seperti tombol "Filters" pada referensi.
-  secondary: "bg-white text-navy-950 ring-1 ring-inset ring-navy-200 hover:bg-navy-50 hover:ring-navy-300",
-  danger: "bg-white text-danger-700 ring-1 ring-inset ring-danger-600/25 hover:bg-danger-50 hover:ring-danger-600/45",
-};
-
-const kelasDasarKecil =
-  "inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full font-medium " +
-  "transition-[background-color,box-shadow,color] duration-150 ease-out active:translate-y-px " +
-  "disabled:cursor-not-allowed disabled:opacity-60 disabled:active:translate-y-0 " +
-  "[&>svg]:size-4 [&>svg]:shrink-0";
-
-/** Tombol pill kecil berteks (tinggi 44px — target sentuh nyaman). */
-export function kelasTombolKecil(variant: VarianTombol = "secondary", className?: string) {
-  return cn(kelasDasarKecil, "min-h-11 gap-1.5 px-4 py-2 text-[0.8125rem]", kelasVarianKecil[variant], className);
-}
-
-/** Tombol bulat ikon saja (44px) — label wajib disediakan lewat teks sr-only. */
-export function kelasTombolBulat(variant: VarianTombol = "secondary", className?: string) {
-  return cn(kelasDasarKecil, "size-11", kelasVarianKecil[variant], className);
-}
+// Gaya tombol dipindah ke modul tanpa "use client" agar juga bisa dipakai
+// Server Component; diekspor ulang di sini demi kompatibilitas import lama.
+import { kelasTombolBulat, kelasTombolKecil, type VarianTombol } from "@/components/admin/kelasTombol";
+export { kelasTombolBulat, kelasTombolKecil };
 
 /** Ikon arsip (kotak) — tidak tersedia di set ikon bersama. Dekoratif. */
 export function IkonArsip({ className = "size-5" }: { className?: string }) {
@@ -81,7 +55,9 @@ export function PesanAksi({ result }: { result: ActionResult | null }) {
     <div
       role={result.ok ? "status" : "alert"}
       className={cn(
-        "flex items-center gap-3.5 rounded-2xl border px-4 py-3.5 text-sm animate-fade-up",
+        // Muncul setelah setiap simpan — cukup pudar + geser 4px yang singkat.
+        "flex items-center gap-3.5 rounded-2xl border px-4 py-3.5 text-sm",
+        "transition-[opacity,translate] duration-200 ease-out starting:-translate-y-1 starting:opacity-0",
         result.ok
           ? "border-sage-300 bg-sage-100 text-sage-700"
           : "border-danger-600/20 bg-danger-50 text-danger-700",
@@ -96,7 +72,7 @@ export function PesanAksi({ result }: { result: ActionResult | null }) {
       >
         {result.ok ? <IconCheck className="size-4" /> : <IconAlert className="size-4" />}
       </span>
-      <p className="font-medium leading-relaxed">
+      <p className="min-w-0 font-medium leading-relaxed [overflow-wrap:anywhere]">
         {/* Status juga dinyatakan dengan teks, bukan warna saja. */}
         <span className="sr-only">{result.ok ? "Berhasil: " : "Gagal: "}</span>
         {result.message}
@@ -146,9 +122,9 @@ export function BilahAksiForm({
   hasil?: ActionResult | null;
 }) {
   return (
-    <div className="sticky bottom-3 z-20 space-y-2.5 sm:bottom-5">
+    <div className="sticky bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-20 space-y-2.5 sm:bottom-5">
       {hasil ? <PesanAksi result={hasil} /> : null}
-      <div className="flex flex-col gap-3 rounded-[1.75rem] border border-navy-200/60 bg-white p-2.5 shadow-float sm:flex-row sm:items-center sm:justify-between sm:pl-6">
+      <div className="flex flex-col gap-3 rounded-bar border border-navy-200/60 bg-white p-2.5 shadow-float sm:flex-row sm:items-center sm:justify-between sm:pl-6">
         {catatan ? (
           <p className="hidden text-sm leading-relaxed text-navy-500 sm:block">{catatan}</p>
         ) : (
@@ -186,6 +162,76 @@ export function TombolKonfirmasi({
   const [terbuka, setTerbuka] = useState(false);
   const [sedangProses, setSedangProses] = useState(false);
   const [pesan, setPesan] = useState<string | null>(null);
+  const pemicuRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const batalRef = useRef<HTMLButtonElement>(null);
+
+  function tutup() {
+    setTerbuka(false);
+    setPesan(null);
+    // Kembalikan fokus ke tombol yang membuka dialog.
+    pemicuRef.current?.focus();
+  }
+
+  // Fokus awal ke tombol aman ("Batal"), bukan ke aksi destruktif.
+  useEffect(() => {
+    if (terbuka) batalRef.current?.focus();
+  }, [terbuka]);
+
+  // Saat memproses, kedua tombol dinonaktifkan sehingga fokus jatuh ke <body>.
+  // Bila aksi gagal, kembalikan fokus ke tombol aman di dalam dialog.
+  useEffect(() => {
+    if (terbuka && !sedangProses && pesan) batalRef.current?.focus();
+  }, [terbuka, sedangProses, pesan]);
+
+  // Aksesibilitas dialog (pola sama dengan Lightbox): Escape menutup (kecuali
+  // saat memproses), Tab berputar di dalam dialog, dan scroll latar dikunci.
+  useEffect(() => {
+    if (!terbuka) return;
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        if (!sedangProses) {
+          setTerbuka(false);
+          setPesan(null);
+          pemicuRef.current?.focus();
+        }
+        return;
+      }
+      if (event.key === "Tab" && dialogRef.current) {
+        const fokusable = dialogRef.current.querySelectorAll<HTMLElement>("button:not(:disabled)");
+        const pertama = fokusable[0];
+        const terakhir = fokusable[fokusable.length - 1];
+        if (!pertama || !terakhir) {
+          event.preventDefault();
+          return;
+        }
+        // Fokus sudah lolos keluar dialog (mis. ke <body>) — tarik kembali ke dalam.
+        if (!dialogRef.current.contains(document.activeElement)) {
+          event.preventDefault();
+          (event.shiftKey ? terakhir : pertama).focus();
+          return;
+        }
+        if (event.shiftKey && document.activeElement === pertama) {
+          event.preventDefault();
+          terakhir.focus();
+        } else if (!event.shiftKey && document.activeElement === terakhir) {
+          event.preventDefault();
+          pertama.focus();
+        }
+      }
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+    const overflowAwal = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = overflowAwal;
+    };
+  }, [terbuka, sedangProses]);
 
   async function jalankan() {
     setSedangProses(true);
@@ -197,7 +243,7 @@ export function TombolKonfirmasi({
         setSedangProses(false);
         return;
       }
-      setTerbuka(false);
+      tutup();
     } catch {
       setPesan("Terjadi gangguan. Silakan coba lagi.");
     } finally {
@@ -211,9 +257,11 @@ export function TombolKonfirmasi({
   return (
     <>
       <button
+        ref={pemicuRef}
         type="button"
         className={bulat ? kelasTombolBulat(variant) : kelasTombolKecil(variant)}
         title={bulat ? label : undefined}
+        aria-haspopup="dialog"
         onClick={() => setTerbuka(true)}
       >
         {ikon}
@@ -222,33 +270,39 @@ export function TombolKonfirmasi({
 
       {terbuka ? (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-navy-950/50 p-4 backdrop-blur-sm sm:items-center"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-navy-950/50 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 transition-opacity duration-200 ease-out starting:opacity-0 sm:items-center sm:p-4"
           onClick={(event) => {
-            if (event.target === event.currentTarget && !sedangProses) setTerbuka(false);
+            if (event.target === event.currentTarget && !sedangProses) tutup();
           }}
         >
           <div
+            ref={dialogRef}
             role="alertdialog"
             aria-modal="true"
             aria-labelledby="judul-konfirmasi"
-            className="w-full max-w-md animate-fade-up whitespace-normal rounded-panel bg-white p-6 text-left shadow-float sm:p-8"
+            aria-describedby="isi-konfirmasi"
+            className="w-full max-w-md whitespace-normal rounded-panel bg-white p-6 text-left shadow-float transition-[opacity,scale] duration-200 ease-out starting:scale-[0.96] starting:opacity-0 sm:p-8"
           >
             <span
               aria-hidden="true"
               className={cn(
                 "grid size-12 place-items-center rounded-full",
-                destruktif ? "bg-danger-50 text-danger-600 ring-1 ring-inset ring-danger-600/15" : "bg-gold-300 text-navy-950",
+                destruktif
+                  ? "bg-danger-50 text-danger-600 ring-1 ring-inset ring-danger-600/15"
+                  : "bg-navy-50 text-navy-700 ring-1 ring-inset ring-navy-200/80",
               )}
             >
               <IconAlert className="size-5" />
             </span>
             <h2
               id="judul-konfirmasi"
-              className="mt-5 text-2xl font-bold tracking-[-0.03em] text-navy-950"
+              className="mt-5 text-2xl font-bold tracking-heading text-navy-950"
             >
               Konfirmasi
             </h2>
-            <p className="mt-2 text-[0.9375rem] leading-relaxed text-navy-600">{pesanKonfirmasi}</p>
+            <p id="isi-konfirmasi" className="mt-2 text-md leading-relaxed text-navy-600">
+              {pesanKonfirmasi}
+            </p>
 
             {pesan ? (
               <p
@@ -262,9 +316,10 @@ export function TombolKonfirmasi({
 
             <div className="mt-8 flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end">
               <Button
+                ref={batalRef}
                 type="button"
                 variant="secondary"
-                onClick={() => setTerbuka(false)}
+                onClick={tutup}
                 disabled={sedangProses}
               >
                 Batal

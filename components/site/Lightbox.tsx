@@ -109,32 +109,32 @@ export function GaleriLightbox({ items }: { items: MediaItemRow[] }) {
                 pemicuRef.current = event.currentTarget;
                 setIndeksAktif(index);
               }}
-              className="group relative block size-full rounded-card border border-navy-200/80 bg-white p-1.5 text-left transition-[box-shadow,transform,border-color] duration-300 ease-out hover:-translate-y-1 hover:border-navy-300 hover:shadow-lift focus-visible:rounded-card! sm:p-2"
+              className="card-interactive group relative block size-full rounded-card border border-navy-200/80 bg-white p-1.5 text-left sm:p-2"
             >
-              <span className="relative block size-full overflow-hidden rounded-[1.1rem] bg-navy-100">
+              <span className="relative block size-full overflow-hidden rounded-inner bg-navy-100">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={item.media_url}
                   alt={item.alt_text}
                   loading="lazy"
-                  className="absolute inset-0 size-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05] group-focus-visible:scale-[1.05]"
+                  className="absolute inset-0 size-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03] group-focus-visible:scale-[1.03]"
                 />
 
-                {/* Lapisan tipis + tombol perbesar kuning: muncul saat hover/fokus. */}
+                {/* Lapisan tipis + ikon perbesar: memudar masuk saat hover/fokus. */}
                 <span
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 bg-navy-950/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100"
+                  className="pointer-events-none absolute inset-0 bg-navy-950/20 opacity-0 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100"
                 />
                 <span
                   aria-hidden="true"
-                  className="pointer-events-none absolute right-2.5 top-2.5 grid size-9 scale-90 place-items-center rounded-full bg-gold-300 text-navy-950 opacity-0 shadow-sm transition-[opacity,transform] duration-300 group-hover:scale-100 group-hover:opacity-100 group-focus-visible:scale-100 group-focus-visible:opacity-100"
+                  className="pointer-events-none absolute right-2.5 top-2.5 grid size-9 place-items-center rounded-full bg-white text-navy-950 opacity-0 shadow-sm transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100"
                 >
                   <IkonPerbesar className="size-4" />
                 </span>
 
                 {/* Keterangan: kartu putih kecil di pojok bawah — selalu tampil (judul dulu selalu terlihat di bawah gambar). */}
                 {item.title || item.taken_at ? (
-                  <span className="pointer-events-none absolute inset-x-2 bottom-2 block rounded-2xl bg-white/95 px-3 py-2 shadow-soft backdrop-blur sm:inset-x-3 sm:bottom-3 sm:px-3.5 sm:py-2.5">
+                  <span className="pointer-events-none absolute inset-x-2 bottom-2 block rounded-2xl bg-white/95 px-3 py-2 shadow-soft sm:inset-x-3 sm:bottom-3 sm:px-3.5 sm:py-2.5">
                     {item.title ? (
                       <span className="line-clamp-2 block text-xs font-semibold leading-snug text-navy-950 sm:text-sm">
                         {item.title}
@@ -156,7 +156,7 @@ export function GaleriLightbox({ items }: { items: MediaItemRow[] }) {
 
       {aktif ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-navy-950/95 p-3 backdrop-blur-md sm:p-6"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-navy-950/95 pb-[max(0.75rem,env(safe-area-inset-bottom))] pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] pt-[max(0.75rem,env(safe-area-inset-top))] transition-opacity duration-200 ease-out starting:opacity-0 sm:pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))] sm:pt-6"
           onClick={(event) => {
             if (event.target === event.currentTarget) tutup();
           }}
@@ -166,7 +166,7 @@ export function GaleriLightbox({ items }: { items: MediaItemRow[] }) {
             role="dialog"
             aria-modal="true"
             aria-label={aktif.title ?? aktif.alt_text}
-            className="relative flex max-h-full w-full max-w-5xl flex-col overflow-y-auto p-1.5 text-white xl:overflow-visible"
+            className="relative flex max-h-full w-full max-w-5xl flex-col overflow-y-auto overscroll-contain p-1.5 text-white transition-[opacity,scale] duration-200 ease-out starting:scale-[0.96] starting:opacity-0 xl:overflow-visible"
           >
             <div className="flex items-center justify-between gap-4 pb-3 sm:pb-4">
               {items.length > 1 ? (
@@ -194,12 +194,13 @@ export function GaleriLightbox({ items }: { items: MediaItemRow[] }) {
 
             <figure className="flex min-h-0 flex-1 flex-col">
               <div className="relative flex min-h-0 items-center justify-center">
+                {/* Berpindah gambar (sering, termasuk lewat panah keyboard) cukup pudar singkat — tanpa gerak. */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   key={aktif.id}
                   src={aktif.media_url}
                   alt={aktif.alt_text}
-                  className="max-h-[68vh] w-auto max-w-full animate-fade-up rounded-card object-contain shadow-[0_30px_80px_-20px_rgb(0_0_0/0.7)]"
+                  className="max-h-[68svh] w-auto max-w-full animate-fade-in rounded-card object-contain shadow-modal"
                 />
 
                 {items.length > 1 ? (
@@ -215,7 +216,7 @@ export function GaleriLightbox({ items }: { items: MediaItemRow[] }) {
                     <button
                       type="button"
                       onClick={() => berpindah(1)}
-                      className={`${TOMBOL_BULAT} ${TOMBOL_KUNING} absolute right-2 top-1/2 -translate-y-1/2 sm:right-3 xl:-right-20`}
+                      className={`${TOMBOL_BULAT} ${TOMBOL_PUTIH} absolute right-2 top-1/2 -translate-y-1/2 sm:right-3 xl:-right-20`}
                     >
                       <IconChevronRight className="size-5" />
                       <span className="sr-only">Berikutnya</span>
@@ -227,12 +228,10 @@ export function GaleriLightbox({ items }: { items: MediaItemRow[] }) {
               {aktif.title || aktif.taken_at || aktif.caption ? (
                 <figcaption className="mx-auto mt-5 w-full max-w-2xl text-center">
                   {aktif.taken_at ? (
-                    <p className="inline-flex rounded-full bg-gold-300 px-3 py-0.5 text-xs font-medium text-navy-950">
-                      {formatTanggalSingkat(aktif.taken_at)}
-                    </p>
+                    <p className="text-sm font-medium text-gold-300">{formatTanggalSingkat(aktif.taken_at)}</p>
                   ) : null}
                   {aktif.title ? (
-                    <h2 className="mt-2.5 text-xl font-bold leading-snug tracking-[-0.025em] text-white text-balance sm:text-2xl">
+                    <h2 className="mt-1.5 text-xl font-bold leading-snug tracking-heading text-white text-balance [overflow-wrap:anywhere] sm:text-2xl">
                       {aktif.title}
                     </h2>
                   ) : null}
@@ -251,13 +250,12 @@ export function GaleriLightbox({ items }: { items: MediaItemRow[] }) {
 
 /**
  * Tombol bulat kontrol lightbox (48px, nyaman disentuh) — seperti tombol
- * carousel referensi: putih untuk tutup/sebelumnya, kuning untuk berikutnya.
+ * carousel referensi: putih untuk tutup, sebelumnya, dan berikutnya.
  * Garis fokus putih agar tetap terlihat di atas latar gelap.
  */
 const TOMBOL_BULAT =
-  "grid size-12 shrink-0 place-items-center rounded-full text-navy-950 shadow-[0_10px_30px_-10px_rgb(0_0_0/0.6)] transition-[background-color,transform] duration-200 active:scale-95 focus-visible:rounded-full! focus-visible:outline-white!";
+  "pressable grid size-12 shrink-0 place-items-center rounded-full text-navy-950 shadow-float focus-visible:outline-white!";
 const TOMBOL_PUTIH = "bg-white hover:bg-navy-100";
-const TOMBOL_KUNING = "bg-gold-300 hover:bg-gold-200";
 
 /**
  * Pola ubin bento: 7 gambar mengisi tepat 12 sel, sehingga rapi tanpa celah

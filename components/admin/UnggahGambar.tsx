@@ -81,9 +81,9 @@ export function UnggahGambar({
     <div>
       <label
         htmlFor={id}
-        className="block text-[0.9375rem] font-semibold tracking-[-0.01em] text-navy-950"
+        className="block text-sm font-semibold text-navy-950"
       >
-        <span className="label-dot">{label}</span>
+        {label}
       </label>
       <p id={`${id}-bantuan`} className="mt-1 text-sm leading-relaxed text-navy-500">
         Unggah berkas (JPG, PNG, WebP, AVIF — maksimal {batasMb} MB) atau tempel URL gambar yang
@@ -129,7 +129,7 @@ export function UnggahGambar({
       >
         {value ? (
           <div className="p-2.5">
-            <div className="relative overflow-hidden rounded-[1.1rem] bg-[repeating-conic-gradient(var(--color-navy-100)_0%_25%,white_0%_50%)] bg-[length:20px_20px]">
+            <div className="relative overflow-hidden rounded-inner bg-[repeating-conic-gradient(var(--color-navy-100)_0%_25%,white_0%_50%)] bg-[length:20px_20px]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 key={value}
@@ -181,11 +181,11 @@ export function UnggahGambar({
           <div className="flex flex-col items-center px-6 py-10 text-center">
             <span
               aria-hidden="true"
-              className="grid size-14 place-items-center rounded-full bg-gold-300 text-navy-950"
+              className="grid size-14 place-items-center rounded-full bg-white text-navy-700 ring-1 ring-inset ring-navy-200/80"
             >
               <IconUpload className="size-6" />
             </span>
-            <p className="mt-4 text-base font-semibold tracking-[-0.01em] text-navy-950">
+            <p className="mt-4 text-base font-semibold text-navy-950">
               {sedangSeret ? "Lepaskan untuk mengunggah" : "Seret gambar ke sini"}
             </p>
             <p className="mt-1 text-sm text-navy-500">
@@ -228,7 +228,7 @@ export function UnggahGambar({
             aria-describedby={`${id}-bantuan${error?.length ? ` ${id}-error` : ""}`}
             aria-invalid={error?.length ? true : undefined}
             className={cn(
-              "block min-h-12 w-full rounded-2xl border py-3 pl-11 pr-4 text-[0.9375rem] text-navy-950",
+              "block min-h-12 w-full rounded-2xl border py-3 pl-11 pr-4 text-md text-navy-950",
               "placeholder:text-navy-400",
               "transition-[border-color,box-shadow] duration-150 ease-out",
               "focus:outline-none focus:ring-4 focus-visible:outline-none",

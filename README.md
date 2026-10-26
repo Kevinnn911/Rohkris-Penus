@@ -21,6 +21,7 @@ diatur admin.
 7. [Backup](#7-backup)
 8. [Environment variables](#8-environment-variables)
 9. [Cara menambah kegiatan dari panel admin](#9-cara-menambah-kegiatan-dari-panel-admin)
+   - [Formulir internal (pengganti Google Form)](#formulir-internal-pengganti-google-form)
 10. [Struktur proyek](#10-struktur-proyek)
 11. [Catatan keamanan](#11-catatan-keamanan)
 12. [Yang masih dibutuhkan dari pihak sekolah](#12-yang-masih-dibutuhkan-dari-pihak-sekolah)
@@ -204,6 +205,12 @@ Bila ada pembaruan kode:
    ```
 4. Di cPanel **Setup Node.js App**, klik tombol **Restart**.
 
+> **Bila pembaruan membawa berkas baru di `database/migrations/`**, jalankan
+> berkas SQL itu **sebelum** langkah 2 (phpMyAdmin → database → tab *Import*,
+> dengan akun pemilik database, bukan akun aplikasi). Kode baru langsung
+> membaca kolom/tabel baru tersebut. Contoh: pembaruan *Formulir Internal*
+> membutuhkan `database/migrations/2026-10-formulir-internal.sql`.
+
 
 ---
 
@@ -248,6 +255,9 @@ Anda**:
   phpMyAdmin → *Export*. Lakukan rutin, misalnya mingguan.
 - **Foto unggahan**: kompres lalu unduh folder `UPLOAD_DIR`
   (misalnya `rohkris-uploads`) lewat File Manager.
+- **Berkas peserta formulir internal**: folder `FORM_UPLOAD_DIR`
+  (misalnya `rohkris-form-uploads`). Berisi data pribadi siswa — simpan
+  cadangannya dengan aman dan hapus bila kegiatan sudah selesai.
 - Banyak hosting juga menyediakan backup otomatis (misalnya JetBackup).
   Pastikan fitur itu aktif dan mencakup folder unggahan.
 
@@ -266,6 +276,12 @@ Anda**:
 | `UPLOAD_DIR` | Server | Disarankan | Folder foto unggahan, di luar folder aplikasi |
 | `NEXT_PUBLIC_SITE_URL` | Publik | Disarankan | Domain produksi, untuk SEO & sitemap (dibaca saat build) |
 | `NODE_ENV` | Server | Ya (produksi) | `production`, mengaktifkan cookie `Secure` |
+| `ADMIN_SECRET_KEY` | **RAHASIA** | Ya | Kunci gerbang panel admin; juga menandatangani token anti-spam formulir internal |
+| `FORM_UPLOAD_DIR` | Server | Disarankan | Folder **privat** berkas unggahan peserta formulir internal. Harus di luar folder aplikasi dan **tidak boleh** berada di dalam `UPLOAD_DIR` (aplikasi menolak bekerja bila bertumpuk) |
+| `MAIL_FROM` | Server | Untuk email | Pengirim email konfirmasi, mis. `Rohkris <noreply@domainanda.sch.id>` |
+| `MAIL_TRANSPORT` | Server | Tidak | `smtp` (bawaan) atau `sendmail` (pakai `/usr/sbin/sendmail` hosting) |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` | Server | Untuk SMTP | Mis. `mail.domainanda.sch.id`, `465`, `true` |
+| `SMTP_USER` / `SMTP_PASS` | **RAHASIA** | Untuk SMTP | Akun email cPanel pengirim |
 
 **Variabel berawalan `NEXT_PUBLIC_` ikut terkirim ke browser.** Jangan pernah
 menaruh rahasia di sana, dan jangan commit `.env.local`.
@@ -283,9 +299,45 @@ menaruh rahasia di sana, dan jangan commit `.env.local`.
    - **Tautan PENDAFTARAN** → tujuan tombol *Daftar Sekarang* (Google Forms).
    - **Tautan DOKUMEN PENDUKUNG** → rundown, booklet, atau surat izin.
 7. Atur status pendaftaran. Tombol daftar hanya muncul bila status **Dibuka**
-   **dan** tautan pendaftaran terisi dengan `https://`.
+   **dan** formulirnya siap: tautan `https://` untuk formulir luar, atau formulir
+   internal yang sudah berisi pertanyaan.
 8. Simpan sebagai **Draft** dulu bila belum siap, lalu **Terbitkan** dari daftar
    kegiatan. Perubahan langsung tampil di website tanpa deploy ulang.
+
+---
+
+### Formulir internal (pengganti Google Form)
+
+Selain tautan Google Form, setiap kegiatan bisa memakai formulir yang dibuat
+langsung di panel admin. Jawaban tersimpan di server dan hanya bisa dilihat admin.
+
+1. **Satu kali**: jalankan `database/migrations/2026-10-formulir-internal.sql`
+   (lihat *Memperbarui website*), lalu isi `FORM_UPLOAD_DIR` bila formulir
+   memakai pertanyaan unggah berkas.
+2. Buka kegiatan → tab **Detail** → bagian Pendaftaran → pilih **Formulir internal**,
+   atur status **Dibuka** dan (opsional) waktu buka/tutup, lalu simpan.
+3. Tab **Formulir**: susun bagian & pertanyaan (jawaban singkat, paragraf, pilihan
+   ganda, kotak centang, dropdown, skala linear, kisi pilihan, tanggal, waktu,
+   unggah berkas). Pilihan ganda/dropdown bisa **melompat ke bagian** tertentu
+   (hanya ke bagian sesudahnya). Gunakan tab **Pratinjau** untuk mencoba.
+4. Tab **Pengaturan** (di builder): kumpulkan email, satu respons per email,
+   izinkan ubah jawaban, kirim salinan email, **kuota**, pesan setelah kirim,
+   dan teks persetujuan data.
+5. Tab **Respons**: ringkasan per pertanyaan, tampilan per respons (termasuk
+   unduh berkas), **ekspor CSV** — pilih *CSV (Excel)* untuk Excel berbahasa
+   Indonesia (pemisah titik koma) atau *CSV (Google Sheets)* — dan hapus respons.
+
+Catatan:
+- Setelah ada respons, jenis pertanyaan yang sudah ada dikunci; teks dan opsi
+  masih boleh diubah. Respons lama tetap terbaca walau opsi/pertanyaan dihapus.
+- Kuota dijaga di database dengan penguncian baris, sehingga dua kiriman
+  bersamaan tidak bisa melampaui kuota.
+- **Email konfirmasi** butuh `MAIL_FROM` + SMTP (atau `MAIL_TRANSPORT=sendmail`).
+  Banyak hosting memblokir SMTP keluar; coba `sendmail` bila SMTP gagal.
+  Bila belum dikonfigurasi, opsi kirim salinan otomatis nonaktif.
+- Formulir tanpa login dilindungi kolom jebakan bot, token waktu, dan batas
+  kiriman per jaringan. “Satu respons per email” mencegah pendaftaran ganda
+  tanpa sengaja, bukan verifikasi identitas.
 
 ---
 

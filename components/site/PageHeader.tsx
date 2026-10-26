@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { HeroBackdrop } from "@/components/site/HeroBackdrop";
+import { IconArrowRight } from "@/components/ui/Icons";
 import { cn } from "@/lib/cn";
 
 /**
@@ -32,7 +33,7 @@ export function PageHeader({
         <div className="relative mx-auto max-w-6xl px-5 pb-14 pt-10 text-center sm:px-8 sm:pb-20 sm:pt-14">
           {breadcrumb && breadcrumb.length > 0 ? (
             <nav aria-label="Breadcrumb" className="mb-8 flex justify-center">
-              <ol className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-full bg-white/80 px-4 py-1.5 text-sm text-navy-600 shadow-soft backdrop-blur">
+              <ol className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-full bg-white px-4 py-1.5 text-sm text-navy-600 ring-1 ring-inset ring-navy-200/80">
                 {breadcrumb.map((item, index) => {
                   const terakhir = index === breadcrumb.length - 1;
                   return (
@@ -60,11 +61,9 @@ export function PageHeader({
 
           <div className="mx-auto max-w-3xl animate-fade-up">
             {eyebrow ? (
-              <p className="inline-flex items-center rounded-full bg-gold-300 px-3.5 py-1 text-sm font-medium text-navy-950">
-                {eyebrow}
-              </p>
+              <p className="text-sm font-medium text-navy-600">{eyebrow}</p>
             ) : null}
-            <h1 className="mt-5 text-4xl font-bold leading-[1.05] tracking-[-0.035em] text-navy-950 text-balance sm:text-6xl">
+            <h1 className="mt-3 text-4xl font-bold leading-[1.05] tracking-display text-navy-950 text-balance sm:text-6xl">
               {title}
             </h1>
             {description ? (
@@ -105,13 +104,11 @@ export function SectionHeading({
     >
       <div className={cn("max-w-2xl", align === "center" && "mx-auto")}>
         {eyebrow ? (
-          <p className="mb-3 text-sm font-medium text-navy-600">
-            <span className="label-dot">{eyebrow}</span>
-          </p>
+          <p className="mb-2 text-sm font-medium text-navy-600">{eyebrow}</p>
         ) : null}
         <h2
           id={id}
-          className="text-3xl font-bold leading-tight tracking-[-0.03em] text-navy-950 text-balance sm:text-[2.1rem]"
+          className="text-3xl font-bold leading-tight tracking-heading text-navy-950 text-balance sm:text-[2.125rem]"
         >
           {title}
         </h2>
@@ -127,12 +124,10 @@ export function ArrowLink({ href, children }: { href: string; children: ReactNod
   return (
     <Link
       href={href}
-      className="group inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-5 text-sm font-medium text-navy-950 ring-1 ring-inset ring-navy-200 transition-colors hover:bg-navy-50"
+      className="pressable group inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-5 text-sm font-medium text-navy-950 ring-1 ring-inset ring-navy-200 hover:bg-navy-50"
     >
       {children}
-      <span aria-hidden="true" className="transition-transform duration-200 group-hover:translate-x-0.5">
-        →
-      </span>
+      <IconArrowRight className="size-4 transition-transform duration-200 ease-out group-hover:translate-x-0.5" />
     </Link>
   );
 }

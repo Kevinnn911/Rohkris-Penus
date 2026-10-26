@@ -9,6 +9,8 @@ import type {
   SiteSettings,
 } from "@/lib/db/types";
 import { isDatabaseConfigured } from "@/lib/env";
+import { lampirkanFormulir } from "@/lib/data/forms";
+import type { EventWithForm } from "@/lib/db/types";
 
 /**
  * Query untuk halaman publik.
@@ -44,6 +46,12 @@ async function daftar<T>(sql: string, params: unknown[] = []): Promise<PublicDat
   }
 }
 
+/** Daftar kegiatan + ringkasan formulir internal (untuk status "Kuota Penuh" dsb.). */
+async function daftarKegiatan(sql: string, params: unknown[] = []): Promise<PublicDataResult<EventWithForm[]>> {
+  const hasil = await daftar<EventRow>(sql, params);
+  return { data: await lampirkanFormulir(hasil.data), failed: hasil.failed };
+}
+
 /** Varian yang hanya mengembalikan array (untuk pemanggil yang tidak menampilkan ErrorState). */
 async function daftarSaja<T>(sql: string, params: unknown[] = []): Promise<T[]> {
   return (await daftar<T>(sql, params)).data;
@@ -67,8 +75,8 @@ function limitClause(limit?: number): string {
 // MySQL mengurutkan NULL paling awal pada ASC; "x IS NULL" di depan
 // meniru perilaku "nulls last" dari versi Postgres.
 
-export async function getFeaturedEvents(limit = 3): Promise<PublicDataResult<EventRow[]>> {
-  return daftar<EventRow>(
+export async function getFeaturedEvents(limit = 3): Promise<PublicDataResult<EventWithForm[]>> {
+  return daftarKegiatan(
     `SELECT * FROM events
       WHERE status = 'published' AND is_featured = 1
       ORDER BY start_at IS NULL, start_at ASC${limitClause(limit)}`,
@@ -81,8 +89,8 @@ export async function getFeaturedEvents(limit = 3): Promise<PublicDataResult<Eve
  * start_at bila end_at kosong. Kegiatan yang tanggalnya belum ditentukan
  * (TBD) ikut tampil di urutan terakhir — dipakai bagian "Belum Dijadwalkan".
  */
-export async function getUpcomingEvents(limit?: number): Promise<PublicDataResult<EventRow[]>> {
-  return daftar<EventRow>(
+export async function getUpcomingEvents(limit?: number): Promise<PublicDataResult<EventWithForm[]>> {
+  return daftarKegiatan(
     `SELECT * FROM events
       WHERE status = 'published'
         AND (COALESCE(end_at, start_at) >= ? OR COALESCE(end_at, start_at) IS NULL)
@@ -92,8 +100,8 @@ export async function getUpcomingEvents(limit?: number): Promise<PublicDataResul
 }
 
 /** Kegiatan yang sudah lewat — arsip (acuan sama dengan isPastEvent). */
-export async function getPastEvents(limit?: number): Promise<PublicDataResult<EventRow[]>> {
-  return daftar<EventRow>(
+export async function getPastEvents(limit?: number): Promise<PublicDataResult<EventWithForm[]>> {
+  return daftarKegiatan(
     `SELECT * FROM events
       WHERE status = 'published' AND COALESCE(end_at, start_at) < ?
       ORDER BY start_at IS NULL, start_at DESC${limitClause(limit)}`,
@@ -101,8 +109,8 @@ export async function getPastEvents(limit?: number): Promise<PublicDataResult<Ev
   );
 }
 
-export async function getAllPublishedEvents(): Promise<PublicDataResult<EventRow[]>> {
-  return daftar<EventRow>(
+export async function getAllPublishedEvents(): Promise<PublicDataResult<EventWithForm[]>> {
+  return daftarKegiatan(
     `SELECT * FROM events WHERE status = 'published'
       ORDER BY start_at IS NULL, start_at DESC`,
   );
@@ -127,13 +135,13 @@ export async function getPublishedEventSlugs(): Promise<
 export async function getRelatedEvents(
   event: Pick<EventRow, "id" | "category">,
   limit = 3,
-): Promise<EventRow[]> {
-  return daftarSaja<EventRow>(
+): Promise<EventWithForm[]> {
+  return lampirkanFormulir(await daftarSaja<EventRow>(
     `SELECT * FROM events
       WHERE status = 'published' AND category = ? AND id <> ?
       ORDER BY start_at IS NULL, start_at DESC${limitClause(limit)}`,
     [event.category, event.id],
-  );
+  ));
 }
 
 /**

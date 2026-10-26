@@ -28,9 +28,7 @@ export default async function DokumentasiPage() {
       >
         {!failed && media.length > 0 ? (
           <p className="inline-flex min-h-9 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium text-navy-950 shadow-soft">
-            <span aria-hidden="true" className="grid size-6 place-items-center rounded-full bg-gold-300">
-              <IconImage className="size-3.5" />
-            </span>
+            <IconImage aria-hidden="true" className="size-4 text-navy-500" />
             {media.length} momen terdokumentasi
           </p>
         ) : null}

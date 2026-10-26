@@ -12,6 +12,7 @@ import {
   type ActionResult,
 } from "@/lib/actions/helpers";
 import { fromDatetimeLocalValue } from "@/lib/format/date";
+import { hapusFolderFormulir } from "@/lib/forms/storage";
 import { hapusBerkasJikaTakTerpakai } from "@/lib/uploads";
 import { buildInsert, buildUpdate, execute, newId, nowDb, queryOne } from "@/lib/db";
 import { eventFormSchema } from "@/lib/validation/schemas";
@@ -40,6 +41,7 @@ function ambilData(formData: FormData) {
     registration_open_at: String(formData.get("registration_open_at") ?? ""),
     registration_close_at: String(formData.get("registration_close_at") ?? ""),
     registration_status: String(formData.get("registration_status") ?? "not_open"),
+    registration_mode: String(formData.get("registration_mode") ?? "external"),
     cost_info: String(formData.get("cost_info") ?? ""),
     dress_code: String(formData.get("dress_code") ?? ""),
     participant_rules: String(formData.get("participant_rules") ?? ""),
@@ -67,6 +69,7 @@ function keBarisDatabase(parsed: z.output<typeof eventFormSchema>) {
     registration_open_at: fromDatetimeLocalValue(parsed.registration_open_at),
     registration_close_at: fromDatetimeLocalValue(parsed.registration_close_at),
     registration_status: parsed.registration_status,
+    registration_mode: parsed.registration_mode,
     cost_info: parsed.cost_info,
     dress_code: parsed.dress_code,
     participant_rules: parsed.participant_rules,
@@ -214,21 +217,35 @@ export async function ubahUnggulanEvent(id: string, unggulan: boolean): Promise<
   );
 }
 
+/** Id formulir internal kegiatan; null bila tidak ada atau tabel belum dimigrasi. */
+async function idFormulir(eventId: string): Promise<string | null> {
+  try {
+    return (await queryOne<{ id: string }>("SELECT id FROM event_forms WHERE event_id = ?", [eventId]))?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function hapusEvent(id: string): Promise<ActionResult> {
   const auth = await requireAdminForAction();
   if (!auth.ok) return gagal(auth.message);
 
   let berkasLama: string | null = null;
+  let formId: string | null = null;
   try {
     berkasLama =
       (await queryOne<{ url: string | null }>("SELECT cover_image_url AS url FROM events WHERE id = ?", [id]))?.url ??
       null;
+    formId = await idFormulir(id);
+    // Respons & berkas formulir internal ikut terhapus (ON DELETE CASCADE).
     await execute("DELETE FROM events WHERE id = ?", [id]);
   } catch (error) {
     return gagal(pesanErrorDatabase(error));
   }
   // Berkas unggahan ikut dihapus bila tak lagi dipakai konten lain.
   await hapusBerkasJikaTakTerpakai(berkasLama);
+  // Folder berkas peserta formulir internal (privat) ikut dibersihkan.
+  if (formId) await hapusFolderFormulir(formId);
 
   revalidateKonten("event");
   return sukses("Kegiatan berhasil dihapus.");

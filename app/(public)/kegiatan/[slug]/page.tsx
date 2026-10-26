@@ -8,9 +8,10 @@ import { EventCard } from "@/components/site/EventCard";
 import { KATEGORI_INFO } from "@/components/site/Kategori";
 import { PageHeader, SectionHeading } from "@/components/site/PageHeader";
 import { Badge } from "@/components/ui/Badge";
-import { ExternalButtonLink } from "@/components/ui/Button";
+import { ButtonLink, ExternalButtonLink } from "@/components/ui/Button";
 import {
   IconArrowLeft,
+  IconArrowRight,
   IconArrowUpRight,
   IconCalendar,
   IconChat,
@@ -30,8 +31,9 @@ import {
   getPublishedEventSlugs,
   getRelatedEvents,
 } from "@/lib/data/public";
+import { lampirkanFormulirSatu } from "@/lib/data/forms";
 import {
-  canShowRegistrationCta,
+  getRegistrationCta,
   getRegistrationLabel,
   getRegistrationState,
 } from "@/lib/events/status";
@@ -75,8 +77,8 @@ export async function generateMetadata({
 }
 
 /**
- * Baris informasi yang hanya tampil bila datanya ada — label tebal bertitik
- * kuning + nilai abu dengan ikon kecil (seperti bar pencarian referensi).
+ * Baris informasi yang hanya tampil bila datanya ada — label tebal dan
+ * nilai abu dengan ikon kecil (seperti bar pencarian referensi).
  */
 function InfoRow({
   label,
@@ -90,9 +92,7 @@ function InfoRow({
   if (!value) return null;
   return (
     <div className="border-t border-navy-100 py-4 first:border-t-0 first:pt-0 last:pb-0">
-      <dt className="text-[0.95rem] font-semibold text-navy-950">
-        <span className="label-dot">{label}</span>
-      </dt>
+      <dt className="text-md font-semibold text-navy-950">{label}</dt>
       <dd className="mt-1.5 flex items-start gap-2 text-sm leading-relaxed text-navy-600">
         <span aria-hidden="true" className="mt-0.5 shrink-0 text-navy-500">
           {icon}
@@ -109,9 +109,10 @@ export default async function DetailKegiatanPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const event = await getEventBySlug(slug);
+  const ditemukan = await getEventBySlug(slug);
 
-  if (!event) notFound();
+  if (!ditemukan) notFound();
+  const event = await lampirkanFormulirSatu(ditemukan);
 
   const [related, media, deskripsiHtml] = await Promise.all([
     getRelatedEvents(event),
@@ -121,7 +122,7 @@ export default async function DetailKegiatanPage({
 
   const state = getRegistrationState(event);
   const label = getRegistrationLabel(state);
-  const tampilkanCta = canShowRegistrationCta(event);
+  const cta = getRegistrationCta(event);
   const waktu = formatRentangKegiatan(event.start_at, event.end_at);
 
   const modeLabel: Record<string, string> = {
@@ -162,8 +163,8 @@ export default async function DetailKegiatanPage({
 
       <div className="mx-auto max-w-6xl px-4 sm:px-8">
         {/* Poster lebar — bingkai putih melayang di tepi bawah header */}
-        <div className="relative z-10 -mt-16 animate-fade-up rounded-panel bg-white p-2.5 shadow-float sm:-mt-24 sm:p-3">
-          <div className="relative aspect-[16/9] overflow-hidden rounded-[1.5rem] bg-navy-100">
+        <div className="relative z-10 -mt-16 rounded-panel bg-white p-2.5 shadow-float sm:-mt-24">
+          <div className="relative aspect-[16/9] overflow-hidden rounded-panel-inner bg-navy-100">
             {event.cover_image_url ? (
               <Image
                 src={event.cover_image_url}
@@ -189,7 +190,7 @@ export default async function DetailKegiatanPage({
             <section aria-labelledby="judul-deskripsi">
               <h2
                 id="judul-deskripsi"
-                className="text-2xl font-bold tracking-[-0.03em] text-navy-950 sm:text-3xl"
+                className="text-2xl font-bold tracking-heading text-navy-950 sm:text-3xl"
               >
                 Tentang Kegiatan
               </h2>
@@ -212,7 +213,7 @@ export default async function DetailKegiatanPage({
               >
                 <span
                   aria-hidden="true"
-                  className="grid size-11 shrink-0 place-items-center rounded-full bg-gold-300 text-navy-950"
+                  className="grid size-11 shrink-0 place-items-center rounded-full bg-navy-50 text-navy-700 ring-1 ring-inset ring-navy-200/80"
                 >
                   <IconUsers className="size-5" />
                 </span>
@@ -232,7 +233,7 @@ export default async function DetailKegiatanPage({
               <section aria-labelledby="judul-dokumentasi">
                 <h2
                   id="judul-dokumentasi"
-                  className="text-2xl font-bold tracking-[-0.03em] text-navy-950 sm:text-3xl"
+                  className="text-2xl font-bold tracking-heading text-navy-950 sm:text-3xl"
                 >
                   Dokumentasi Kegiatan
                 </h2>
@@ -247,10 +248,10 @@ export default async function DetailKegiatanPage({
                         src={item.media_url}
                         alt={item.alt_text}
                         loading="lazy"
-                        className="aspect-square w-full rounded-[1rem] bg-navy-100 object-cover"
+                        className="aspect-square w-full rounded-inner bg-navy-100 object-cover"
                       />
                       {item.caption ? (
-                        <p className="px-2 pb-1 pt-2.5 text-xs leading-relaxed text-navy-600">
+                        <p className="px-2 pb-1 pt-2.5 text-xs leading-relaxed text-navy-600 [overflow-wrap:anywhere]">
                           {item.caption}
                         </p>
                       ) : null}
@@ -263,7 +264,7 @@ export default async function DetailKegiatanPage({
 
           {/* Sidebar informasi + CTA */}
           <aside className="lg:sticky lg:top-28 lg:self-start">
-            <div className="rounded-[1.75rem] bg-white p-6 shadow-float sm:p-7">
+            <div className="rounded-bar bg-white p-6 shadow-float sm:p-7">
               <div className="flex items-center gap-3">
                 <span
                   aria-hidden="true"
@@ -271,7 +272,7 @@ export default async function DetailKegiatanPage({
                 >
                   <IconInfo className="size-5" />
                 </span>
-                <h2 className="text-lg font-bold tracking-[-0.02em] text-navy-950">
+                <h2 className="text-lg font-bold tracking-heading text-navy-950">
                   Informasi Kegiatan
                 </h2>
               </div>
@@ -316,13 +317,19 @@ export default async function DetailKegiatanPage({
 
               {/* CTA pendaftaran — hanya bila benar-benar terbuka dan URL valid */}
               <div className="mt-7">
-                {tampilkanCta && event.registration_url ? (
+                {cta && !cta.external ? (
                   <>
-                    <ExternalButtonLink
-                      href={event.registration_url}
-                      size="lg"
-                      className="w-full min-h-14! text-base!"
-                    >
+                    <ButtonLink href={cta.href} size="lg" className="w-full min-h-14! text-base!">
+                      Daftar Sekarang
+                      <IconArrowRight className="size-4" />
+                    </ButtonLink>
+                    <p className="mt-2.5 text-center text-xs leading-relaxed text-navy-500">
+                      Formulir pendaftaran diisi langsung di situs ini.
+                    </p>
+                  </>
+                ) : cta ? (
+                  <>
+                    <ExternalButtonLink href={cta.href} size="lg" className="w-full min-h-14! text-base!">
                       Daftar Sekarang
                       <IconArrowUpRight className="size-4" />
                     </ExternalButtonLink>
@@ -353,9 +360,9 @@ export default async function DetailKegiatanPage({
               <div className="mt-6 border-t border-navy-100 pt-4">
                 <Link
                   href="/kegiatan"
-                  className="group inline-flex min-h-11 items-center gap-2 text-sm font-medium text-navy-700 transition-colors hover:text-navy-950"
+                  className="pressable group inline-flex min-h-11 items-center gap-2 text-sm font-medium text-navy-700 hover:text-navy-950"
                 >
-                  <IconArrowLeft className="size-4 transition-transform group-hover:-translate-x-0.5" />
+                  <IconArrowLeft className="size-4 transition-transform duration-200 ease-out group-hover:-translate-x-0.5" />
                   Kembali ke daftar kegiatan
                 </Link>
               </div>
@@ -368,7 +375,7 @@ export default async function DetailKegiatanPage({
       {related.length > 0 ? (
         <section
           aria-labelledby="judul-terkait"
-          className="mx-auto max-w-7xl px-4 pb-8 pt-20 sm:px-8 sm:pt-24"
+          className="mx-auto max-w-6xl px-4 pb-8 pt-20 sm:px-8 sm:pt-24"
         >
           <SectionHeading
             id="judul-terkait"

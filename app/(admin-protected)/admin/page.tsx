@@ -1,11 +1,10 @@
 import Link from "next/link";
 import type { ComponentType, ReactNode, SVGProps } from "react";
 
-import { Tag, type TagTone } from "@/components/site/Kategori";
+import { ArrowLink } from "@/components/site/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import {
-  IconArrowRight,
   IconCalendar,
   IconClock,
   IconEdit,
@@ -29,31 +28,26 @@ function KartuStatistik({
   nilai,
   keterangan,
   Icon,
-  tag,
   aksen = false,
 }: {
   label: string;
   nilai: number;
   keterangan?: string;
   Icon: IconComponent;
-  tag: { label: string; tone: TagTone };
   aksen?: boolean;
 }) {
   return (
     <div className="flex h-full flex-col rounded-card border border-navy-200/80 bg-white p-5 sm:p-6">
-      <div className="flex items-start justify-between gap-3">
-        <span
-          aria-hidden="true"
-          className={cn(
-            "grid size-11 shrink-0 place-items-center rounded-full text-navy-950",
-            aksen ? "bg-gold-300" : "bg-navy-100",
-          )}
-        >
-          <Icon className="size-5" />
-        </span>
-        <Tag tone={tag.tone}>{tag.label}</Tag>
-      </div>
-      <p className="mt-5 text-4xl font-bold leading-none tracking-[-0.04em] text-navy-950 tabular-nums">
+      <span
+        aria-hidden="true"
+        className={cn(
+          "grid size-11 shrink-0 place-items-center rounded-full text-navy-950",
+          aksen ? "bg-gold-300" : "bg-navy-100",
+        )}
+      >
+        <Icon className="size-5" />
+      </span>
+      <p className="mt-5 text-4xl font-bold leading-none tracking-display text-navy-950 tabular-nums">
         {nilai}
       </p>
       <p className="mt-2 text-sm font-semibold text-navy-950">{label}</p>
@@ -110,17 +104,13 @@ function KartuDaftar({
           >
             <Icon className="size-5" />
           </span>
-          <h2 id={idJudul} className="truncate text-lg font-bold tracking-[-0.02em] text-navy-950">
+          <h2 id={idJudul} className="truncate text-lg font-bold tracking-heading text-navy-950">
             {judul}
           </h2>
         </div>
-        <Link
-          href={hrefSemua}
-          className="group inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-medium text-navy-950 ring-1 ring-inset ring-navy-200 transition-colors hover:bg-navy-50"
-        >
-          Lihat semua
-          <IconArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-        </Link>
+        <div className="shrink-0">
+          <ArrowLink href={hrefSemua}>Lihat semua</ArrowLink>
+        </div>
       </div>
       {children}
     </section>
@@ -129,10 +119,10 @@ function KartuDaftar({
 
 function DaftarKosong({ children }: { children: ReactNode }) {
   return (
-    <div className="m-2.5 flex flex-col items-center rounded-[1.1rem] bg-ivory-100 px-6 py-10 text-center">
+    <div className="m-2.5 flex flex-col items-center rounded-inner bg-ivory-100 px-6 py-10 text-center">
       <span
         aria-hidden="true"
-        className="grid size-11 place-items-center rounded-full bg-gold-300 text-navy-950"
+        className="grid size-11 place-items-center rounded-full bg-white text-navy-700 ring-1 ring-inset ring-navy-200/80"
       >
         <IconClock className="size-5" />
       </span>
@@ -153,13 +143,11 @@ export default async function DashboardPage() {
   const beritaTerbaru = berita.slice(0, 5);
 
   return (
-    <div className="space-y-12 animate-fade-up">
+    <div className="space-y-12">
       <header className="flex flex-wrap items-end justify-between gap-6">
         <div className="max-w-2xl">
-          <p className="inline-flex items-center rounded-full bg-gold-300 px-3.5 py-1 text-sm font-medium text-navy-950">
-            Dashboard
-          </p>
-          <h1 className="mt-4 text-4xl font-bold leading-[1.05] tracking-[-0.04em] text-navy-950 text-balance sm:text-5xl">
+          <p className="text-sm font-medium text-navy-600">Dashboard</p>
+          <h1 className="mt-2 text-4xl font-bold leading-[1.05] tracking-display text-navy-950 text-balance [overflow-wrap:anywhere] sm:text-5xl">
             Selamat datang, {admin.display_name}
           </h1>
           <p className="mt-3 text-base leading-relaxed text-navy-600 sm:text-lg">
@@ -182,7 +170,6 @@ export default async function DashboardPage() {
             nilai={ringkasan.totalEvent}
             keterangan={`${ringkasan.eventPublished} terbit · ${ringkasan.eventDraft} draft`}
             Icon={IconCalendar}
-            tag={{ label: "Kegiatan", tone: "kuning" }}
             aksen
           />
           <KartuStatistik
@@ -190,28 +177,25 @@ export default async function DashboardPage() {
             nilai={ringkasan.eventMendatang}
             keterangan="Sudah terbit dan belum lewat"
             Icon={IconClock}
-            tag={{ label: "Mendatang", tone: "hijau" }}
           />
           <KartuStatistik
             label="Berita"
             nilai={ringkasan.totalBerita}
             keterangan={`${ringkasan.beritaDraft} masih draft`}
             Icon={IconNewspaper}
-            tag={{ label: "Kabar", tone: "merah" }}
           />
           <KartuStatistik
             label="Dokumentasi"
             nilai={ringkasan.totalMedia}
             keterangan={`${ringkasan.mediaDraft} masih draft`}
             Icon={IconImage}
-            tag={{ label: "Galeri", tone: "biru" }}
           />
         </div>
       </section>
 
       {/* Pintasan */}
       <section aria-labelledby="judul-pintasan">
-        <h2 id="judul-pintasan" className="text-2xl font-bold tracking-[-0.03em] text-navy-950">
+        <h2 id="judul-pintasan" className="text-2xl font-bold tracking-heading text-navy-950">
           Pintasan
         </h2>
         <p className="mt-1.5 text-navy-600">Aksi yang paling sering dipakai pengurus.</p>
@@ -242,7 +226,7 @@ export default async function DashboardPage() {
               {eventTerbaru.map((event) => (
                 <li
                   key={event.id}
-                  className="flex items-center justify-between gap-3 rounded-[1.1rem] px-3 py-3 transition-colors hover:bg-navy-50 sm:px-4"
+                  className="flex items-center justify-between gap-3 rounded-inner px-3 py-3 transition-colors duration-150 hover:bg-navy-50 sm:px-4"
                 >
                   <div className="min-w-0">
                     <Link
@@ -279,7 +263,7 @@ export default async function DashboardPage() {
               {beritaTerbaru.map((post) => (
                 <li
                   key={post.id}
-                  className="flex items-center justify-between gap-3 rounded-[1.1rem] px-3 py-3 transition-colors hover:bg-navy-50 sm:px-4"
+                  className="flex items-center justify-between gap-3 rounded-inner px-3 py-3 transition-colors duration-150 hover:bg-navy-50 sm:px-4"
                 >
                   <div className="min-w-0">
                     <Link

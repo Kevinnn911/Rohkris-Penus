@@ -10,18 +10,12 @@ import { ArrowLink, SectionHeading } from "@/components/site/PageHeader";
 import { ButtonLink } from "@/components/ui/Button";
 import {
   IconArrowRight,
-  IconBook,
   IconCalendar,
-  IconCross,
-  IconHandHeart,
-  IconHeart,
-  IconLamp,
+  IconChevronRight,
+  IconFilter,
   IconMegaphone,
-  IconMusic,
   IconSearch,
-  IconSparkle,
   IconTag,
-  IconUsers,
 } from "@/components/ui/Icons";
 import { EmptyState, ErrorState, SetupNotice } from "@/components/ui/States";
 import {
@@ -33,21 +27,11 @@ import {
   getUpcomingEvents,
 } from "@/lib/data/public";
 import { isDatabaseConfigured } from "@/lib/env";
-import { formatRentangKegiatan, formatTanggalSingkat } from "@/lib/format/date";
+import { formatTanggalSingkat } from "@/lib/format/date";
 import { EVENT_CATEGORIES, type EventRow } from "@/lib/db/types";
 import { perluTanpaOptimasi } from "@/lib/images";
 
 export const revalidate = 300;
-
-/** Deretan ikon bulat di bawah judul hero (pengganti deretan emoji pada referensi). */
-const NILAI = [
-  { Icon: IconCross, label: "Iman" },
-  { Icon: IconHeart, label: "Kasih" },
-  { Icon: IconBook, label: "Firman" },
-  { Icon: IconUsers, label: "Persekutuan" },
-  { Icon: IconMusic, label: "Pujian" },
-  { Icon: IconHandHeart, label: "Pelayanan" },
-] as const;
 
 const STATUS_PILIHAN = [
   { value: "semua", label: "Semua status" },
@@ -55,6 +39,10 @@ const STATUS_PILIHAN = [
   { value: "pendaftaran", label: "Pendaftaran dibuka" },
   { value: "arsip", label: "Arsip" },
 ] as const;
+
+/** Kontrol pilihan yang tenang: tanpa garis bawah, panah kecil dari <PencarianField>. */
+const SELECT_KELAS =
+  "min-h-11 w-full min-w-0 cursor-pointer appearance-none truncate bg-transparent pr-6 text-md text-navy-700 transition-colors duration-150 hover:text-navy-950";
 
 export default async function BerandaPage() {
   const configured = isDatabaseConfigured();
@@ -81,63 +69,51 @@ export default async function BerandaPage() {
         >
           <HeroBackdrop />
 
-          {/* Kartu melayang kiri — kegiatan terdekat */}
-          <FloatingEventChip event={terdekat} />
-
-          {/* Kartu melayang kanan — ayat */}
-          <div className="absolute right-8 top-44 hidden w-56 animate-float rounded-[1.4rem] bg-white/75 p-2.5 shadow-float ring-1 ring-white backdrop-blur-md xl:block [animation-delay:1.5s]">
-            <div className="relative overflow-hidden rounded-[1rem] bg-gradient-to-br from-[#d9e6f2] via-[#eef2f6] to-[#f8e9b8] px-4 py-5">
-              <IconLamp aria-hidden="true" className="absolute right-3 top-3 size-5 text-navy-950/50" />
-              <p className="text-[0.95rem] font-semibold leading-tight text-navy-950">
-                Kamu adalah
-                <br />
-                terang dunia
-              </p>
-            </div>
-            <p className="px-2 pb-1 pt-3 text-xs text-navy-500">
-              <span className="font-medium text-navy-950">Matius 5:14</span> · Ayat tema
-            </p>
-          </div>
-
           <div className="relative mx-auto max-w-4xl px-5 text-center">
             <h1
               id="judul-hero"
-              className="animate-fade-up text-[3.1rem] font-bold leading-[0.98] tracking-[-0.055em] text-navy-950 text-balance sm:text-7xl lg:text-[6.5rem]"
+              className="animate-fade-up text-[3.1rem] font-bold leading-[0.98] tracking-display text-navy-950 text-balance sm:text-7xl lg:text-[6.5rem]"
             >
               Bertumbuh dalam Iman
             </h1>
             <p
-              className="mx-auto mt-6 max-w-xl animate-fade-up text-lg text-navy-600 sm:text-xl"
-              style={{ animationDelay: "100ms" }}
+              className="mx-auto mt-6 max-w-xl animate-fade-up text-lg text-navy-600 text-pretty sm:text-xl"
+              style={{ animationDelay: "60ms" }}
             >
               {settings.site_tagline ?? "Bersama dalam kasih, pujian, dan pelayanan."}
             </p>
 
-            <ul
-              className="mt-10 flex animate-fade-up justify-center"
-              style={{ animationDelay: "180ms" }}
-              aria-label="Nilai-nilai Rohkris"
+            <div
+              className="mt-10 flex animate-fade-up flex-wrap justify-center gap-3"
+              style={{ animationDelay: "120ms" }}
             >
-              {NILAI.map(({ Icon, label }) => (
-                <li key={label} className="-ml-2 first:ml-0">
-                  <span
-                    title={label}
-                    className="grid size-12 place-items-center rounded-full bg-white text-navy-950 shadow-soft ring-4 ring-[#eef0f2] sm:size-[3.25rem]"
-                  >
-                    <Icon className="size-5" />
-                    <span className="sr-only">{label}</span>
+              <ButtonLink href="/kegiatan" size="lg">
+                Lihat kegiatan
+              </ButtonLink>
+              <ButtonLink href="/jadwal" variant="secondary" size="lg">
+                Jadwal
+              </ButtonLink>
+            </div>
+
+            {/* Satu baris tenang menuju kegiatan terdekat (bila ada) */}
+            {terdekat ? (
+              <p className="mt-5 flex animate-fade-up justify-center" style={{ animationDelay: "120ms" }}>
+                <Link
+                  href={`/kegiatan/${terdekat.slug}`}
+                  className="group inline-flex min-h-11 min-w-0 max-w-full items-center gap-1.5 text-sm text-navy-600 transition-colors duration-150 hover:text-navy-950"
+                >
+                  <span className="shrink-0">Terdekat:</span>
+                  <span className="min-w-0 truncate font-medium text-navy-950">{terdekat.title}</span>
+                  <span className="shrink-0">
+                    · {formatTanggalSingkat(terdekat.start_at) ?? "Segera diumumkan"}
                   </span>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-5 animate-fade-up" style={{ animationDelay: "240ms" }}>
-              <Link
-                href="/tentang"
-                className="text-sm font-medium text-navy-950 underline decoration-navy-950 underline-offset-4 hover:decoration-2"
-              >
-                Terbuka untuk seluruh siswa
-              </Link>
-            </p>
+                  <IconChevronRight
+                    aria-hidden="true"
+                    className="size-4 shrink-0 transition-[translate] duration-200 ease-out group-hover:translate-x-0.5"
+                  />
+                </Link>
+              </p>
+            ) : null}
           </div>
         </section>
       </div>
@@ -149,15 +125,10 @@ export default async function BerandaPage() {
           method="get"
           role="search"
           aria-label="Cari kegiatan"
-          className="grid gap-1 rounded-[1.75rem] bg-white p-3 shadow-float sm:p-4 md:grid-cols-[1fr_1fr_1fr_auto] md:items-center md:gap-0 md:rounded-[2rem]"
+          className="grid gap-1 rounded-bar bg-white p-3 shadow-float sm:p-4 md:grid-cols-[1fr_1fr_1fr_auto] md:items-center md:gap-0 md:rounded-panel"
         >
           <PencarianField id="cari-kategori" label="Kategori" Icon={IconTag}>
-            <select
-              id="cari-kategori"
-              name="kategori"
-              defaultValue="semua"
-              className="w-full cursor-pointer appearance-none bg-transparent py-1 text-sm text-navy-600 underline decoration-navy-300 underline-offset-4 focus:outline-none"
-            >
+            <select id="cari-kategori" name="kategori" defaultValue="semua" className={SELECT_KELAS}>
               <option value="semua">Semua kategori</option>
               {EVENT_CATEGORIES.map((kategori) => (
                 <option key={kategori} value={kategori}>
@@ -167,13 +138,8 @@ export default async function BerandaPage() {
             </select>
           </PencarianField>
 
-          <PencarianField id="cari-status" label="Status" Icon={IconSparkle} pemisah>
-            <select
-              id="cari-status"
-              name="status"
-              defaultValue="semua"
-              className="w-full cursor-pointer appearance-none bg-transparent py-1 text-sm text-navy-600 underline decoration-navy-300 underline-offset-4 focus:outline-none"
-            >
+          <PencarianField id="cari-status" label="Status" Icon={IconFilter} pemisah>
+            <select id="cari-status" name="status" defaultValue="semua" className={SELECT_KELAS}>
               {STATUS_PILIHAN.map((item) => (
                 <option key={item.value} value={item.value}>
                   {item.label}
@@ -182,23 +148,25 @@ export default async function BerandaPage() {
             </select>
           </PencarianField>
 
-          <div className="px-4 py-3 md:border-l md:border-navy-200 md:px-7">
-            <p className="text-lg font-semibold text-navy-950">
-              <span className="label-dot">Jadwal</span>
-            </p>
+          <div className="px-4 py-2.5 md:border-l md:border-navy-200 md:px-7">
+            <p className="text-sm font-semibold text-navy-950">Jadwal</p>
             <Link
               href="/jadwal"
-              className="mt-1 inline-flex items-center gap-2 py-1 text-sm text-navy-600 underline decoration-navy-300 underline-offset-4 hover:text-navy-950"
+              className="group flex min-h-11 items-center gap-2 text-md text-navy-700 transition-colors duration-150 hover:text-navy-950"
             >
-              <IconCalendar className="size-4" />
+              <IconCalendar className="size-4 shrink-0 text-navy-500" />
               Lihat kalender
+              <IconChevronRight
+                aria-hidden="true"
+                className="ml-auto size-4 shrink-0 text-navy-400 transition-[translate] duration-200 ease-out group-hover:translate-x-0.5"
+              />
             </Link>
           </div>
 
           <div className="px-2 pb-2 pt-1 md:p-0 md:pl-4">
             <button
               type="submit"
-              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-navy-950 font-medium text-white transition-colors hover:bg-navy-800 md:size-[4.5rem] md:min-h-0"
+              className="pressable flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-navy-950 font-medium text-white shadow-button hover:bg-navy-800 md:size-[4.5rem] md:min-h-0"
             >
               <IconSearch className="size-6" />
               <span className="md:sr-only">Cari kegiatan</span>
@@ -207,10 +175,10 @@ export default async function BerandaPage() {
         </form>
       </div>
 
-      <div className="mx-auto max-w-7xl space-y-24 px-4 pb-8 pt-20 sm:px-8 sm:pt-24">
+      <div className="mx-auto max-w-7xl space-y-24 px-4 pt-20 sm:px-8 sm:pt-24">
         {!configured ? <SetupNotice /> : null}
 
-        {/* Pengumuman aktif */}
+        {/* Pengumuman aktif — ikon netral; kuning disimpan untuk aksen seksi "Tentang" */}
         {announcements.length > 0 ? (
           <section aria-labelledby="judul-pengumuman">
             <h2 id="judul-pengumuman" className="sr-only">
@@ -219,13 +187,17 @@ export default async function BerandaPage() {
             <ul className="grid gap-4 md:grid-cols-2">
               {announcements.map((item) => (
                 <li key={item.id} className="flex gap-4 rounded-card border border-navy-200/80 bg-white p-5">
-                  <span className="grid size-11 shrink-0 place-items-center rounded-full bg-gold-300 text-navy-950">
+                  <span className="grid size-11 shrink-0 place-items-center rounded-full bg-navy-50 text-navy-700 ring-1 ring-inset ring-navy-200/80">
                     <IconMegaphone className="size-5" />
                   </span>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs font-medium text-navy-500">Pengumuman</p>
-                    <h3 className="mt-0.5 font-semibold text-navy-950">{item.title}</h3>
-                    {item.body ? <p className="mt-1.5 text-sm leading-relaxed text-navy-600">{item.body}</p> : null}
+                    <h3 className="mt-0.5 font-semibold text-navy-950 [overflow-wrap:anywhere]">{item.title}</h3>
+                    {item.body ? (
+                      <p className="mt-1.5 text-sm leading-relaxed text-navy-600 [overflow-wrap:anywhere]">
+                        {item.body}
+                      </p>
+                    ) : null}
                   </div>
                 </li>
               ))}
@@ -296,27 +268,22 @@ export default async function BerandaPage() {
             )}
           </div>
         </section>
+      </div>
 
-        {/* Tentang singkat */}
+      {/* Tentang singkat — satu-satunya aksen kuning di seksi ini.
+          Berada di luar pembungkus konten agar memakai bingkai yang sama dengan
+          hero & footer (px-3 sm:px-5 + max-w-7xl), sehingga lebarnya sejajar. */}
+      <div className="mt-24 px-3 sm:px-5">
         <section
           aria-labelledby="judul-tentang"
-          className="relative isolate overflow-hidden rounded-hero bg-navy-950 px-6 py-14 text-white sm:px-14 sm:py-16"
+          className="mx-auto max-w-7xl rounded-hero bg-navy-950 px-6 py-14 text-white sm:px-14 sm:py-16"
         >
-          <div aria-hidden="true" className="absolute -right-20 -top-20 -z-10 size-80 rounded-full bg-gold-300/20 blur-3xl" />
-          <div aria-hidden="true" className="absolute -right-10 top-10 -z-10 size-72 rounded-full border border-white/10" />
-          <IconCross
-            aria-hidden="true"
-            className="pointer-events-none absolute -bottom-12 right-6 -z-10 size-72 text-white/[0.05]"
-            strokeWidth={1}
-          />
           <div className="grid items-end gap-10 lg:grid-cols-12">
             <div className="lg:col-span-8">
-              <p className="inline-flex rounded-full bg-gold-300 px-3.5 py-1 text-sm font-medium text-navy-950">
-                Tentang Kami
-              </p>
+              <p className="text-sm font-medium text-gold-300">Tentang Kami</p>
               <h2
                 id="judul-tentang"
-                className="mt-5 text-3xl font-bold leading-[1.1] tracking-[-0.035em] text-balance sm:text-5xl"
+                className="mt-4 text-3xl font-bold leading-[1.1] tracking-heading text-balance sm:text-5xl"
               >
                 Satu keluarga yang bertumbuh dan melayani bersama.
               </h2>
@@ -335,7 +302,10 @@ export default async function BerandaPage() {
             </div>
           </div>
         </section>
+      </div>
 
+      {media.data.length > 0 || news.data.length > 0 ? (
+      <div className="mx-auto max-w-7xl space-y-24 px-4 pb-8 pt-24 sm:px-8">
         {/* Cuplikan dokumentasi */}
         {media.data.length > 0 ? (
           <section aria-labelledby="judul-galeri">
@@ -350,7 +320,7 @@ export default async function BerandaPage() {
                 <li
                   key={item.id}
                   className={
-                    "group relative overflow-hidden rounded-card bg-navy-100 " +
+                    "relative overflow-hidden rounded-card bg-navy-100 " +
                     (index === 0 ? "col-span-2 row-span-2" : index === 3 ? "sm:col-span-2" : "")
                   }
                 >
@@ -359,7 +329,7 @@ export default async function BerandaPage() {
                     src={item.media_url}
                     alt={item.alt_text}
                     loading="lazy"
-                    className="size-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                    className="size-full object-cover"
                   />
                 </li>
               ))}
@@ -380,17 +350,17 @@ export default async function BerandaPage() {
               {news.data.map((post) => (
                 <li
                   key={post.id}
-                  className="group relative flex flex-col rounded-card border border-navy-200/80 bg-white p-2.5 transition-[box-shadow,transform] duration-300 hover:-translate-y-1 hover:shadow-lift"
+                  className="card-interactive group relative flex flex-col rounded-card border border-navy-200/80 bg-white p-2.5"
                 >
                   {post.cover_image_url ? (
-                    <div className="relative aspect-[16/10] overflow-hidden rounded-[1.1rem] bg-navy-100">
+                    <div className="relative aspect-[16/10] overflow-hidden rounded-inner bg-navy-100">
                       <Image
                         src={post.cover_image_url}
                         unoptimized={perluTanpaOptimasi(post.cover_image_url)}
                         alt=""
                         fill
                         sizes="(max-width: 768px) 100vw, 33vw"
-                        className="object-cover transition-transform duration-700 group-hover:scale-[1.05]"
+                        className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
                       />
                     </div>
                   ) : null}
@@ -398,7 +368,7 @@ export default async function BerandaPage() {
                     <p className="text-xs text-navy-500">
                       {formatTanggalSingkat(post.published_at) ?? "Tanggal belum diatur"}
                     </p>
-                    <h3 className="mt-2 text-lg font-semibold leading-snug tracking-[-0.015em] text-navy-950">
+                    <h3 className="mt-2 text-lg font-semibold leading-snug tracking-heading text-navy-950 [overflow-wrap:anywhere]">
                       <Link href={`/berita/${post.slug}`} className="after:absolute after:inset-0">
                         {post.title}
                       </Link>
@@ -408,7 +378,7 @@ export default async function BerandaPage() {
                     ) : null}
                     <span className="mt-auto inline-flex items-center gap-1.5 pt-5 text-sm font-medium text-navy-950">
                       Baca selengkapnya
-                      <IconArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                      <IconArrowRight className="size-4 transition-[translate] duration-200 ease-out group-hover:translate-x-1" />
                     </span>
                   </div>
                 </li>
@@ -417,11 +387,12 @@ export default async function BerandaPage() {
           </section>
         ) : null}
       </div>
+      ) : null}
     </>
   );
 }
 
-/** Satu kolom pada bar pencarian: label tebal bertitik kuning + kontrol bergaris bawah. */
+/** Satu kolom pada bar pencarian: label kecil tebal + kontrol pilihan berikon. */
 function PencarianField({
   id,
   label,
@@ -436,49 +407,18 @@ function PencarianField({
   children: React.ReactNode;
 }) {
   return (
-    <div className={pemisah ? "px-4 py-3 md:border-l md:border-navy-200 md:px-7" : "px-4 py-3 md:px-7"}>
-      <label htmlFor={id} className="block text-lg font-semibold text-navy-950">
-        <span className="label-dot">{label}</span>
+    <div className={pemisah ? "px-4 py-2.5 md:border-l md:border-navy-200 md:px-7" : "px-4 py-2.5 md:px-7"}>
+      <label htmlFor={id} className="block text-sm font-semibold text-navy-950">
+        {label}
       </label>
-      <div className="mt-1 flex items-center gap-2 text-navy-500">
+      <div className="relative flex items-center gap-2 text-navy-500">
         <Icon className="size-4 shrink-0" />
         {children}
+        <IconChevronRight
+          aria-hidden="true"
+          className="pointer-events-none absolute right-0 size-4 rotate-90 text-navy-400"
+        />
       </div>
     </div>
-  );
-}
-
-/** Kartu kecil melayang di sisi kiri hero. */
-function FloatingEventChip({ event }: { event: EventRow | undefined }) {
-  const href = event ? `/kegiatan/${event.slug}` : "/jadwal";
-  const judul = event?.title ?? "Ibadah & persekutuan";
-  const keterangan = event
-    ? (formatRentangKegiatan(event.start_at, event.end_at) ?? "Tanggal akan diumumkan")
-    : "Lihat jadwal terdekat";
-
-  return (
-    <Link
-      href={href}
-      className="group absolute left-8 top-60 hidden w-64 animate-float items-center gap-3 rounded-[1.4rem] bg-white/75 p-3 pr-4 shadow-float ring-1 ring-white backdrop-blur-md transition-colors hover:bg-white lg:flex"
-    >
-      <span className="relative grid size-12 shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-gold-200 via-gold-300 to-sage-300 text-navy-950">
-        {event?.cover_image_url ? (
-          <Image
-            src={event.cover_image_url}
-            unoptimized={perluTanpaOptimasi(event.cover_image_url)}
-            alt=""
-            fill
-            sizes="48px"
-            className="object-cover"
-          />
-        ) : (
-          <IconCalendar className="size-5" />
-        )}
-      </span>
-      <span className="min-w-0">
-        <span className="block truncate font-medium text-navy-950">{judul}</span>
-        <span className="block truncate text-xs text-navy-500">{keterangan}</span>
-      </span>
-    </Link>
   );
 }

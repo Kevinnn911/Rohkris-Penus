@@ -141,6 +141,16 @@ export function KategoriFleksibel({
   // Navigasi tombol panah keyboard
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
+      // Jangan merebut panah saat pengguna mengetik/memilih di kolom isian atau memakai pintasan.
+      if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))
+      ) {
+        return;
+      }
+
       if (event.key === "ArrowLeft") {
         navigasi(-1);
       } else if (event.key === "ArrowRight") {
@@ -182,7 +192,7 @@ export function KategoriFleksibel({
   const activeKategoriIndex = ((currentIndex % total) + total) % total;
 
   const tombolNav =
-    "grid size-11 place-items-center rounded-full transition-all duration-200 active:scale-90 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-950 cursor-pointer";
+    "pressable grid size-11 place-items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-950 cursor-pointer";
 
   // Transisi cerdas: 600ms saat pergeseran slide, 300ms saat kursor hover, dan none saat 1 frame silent normalization
   const cardTransition = isTransitioning
@@ -199,7 +209,7 @@ export function KategoriFleksibel({
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <Link
             href="/kegiatan"
-            className="inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium text-navy-950 ring-1 ring-inset ring-navy-200 transition-all duration-200 hover:bg-navy-50 active:scale-95"
+            className="pressable inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium text-navy-950 ring-1 ring-inset ring-navy-200 hover:bg-navy-50"
           >
             <IconFilter className="size-4" />
             <span className="hidden sm:inline">Semua</span> Kegiatan
@@ -217,19 +227,21 @@ export function KategoriFleksibel({
             type="button"
             onClick={() => navigasi(1)}
             aria-label="Kategori berikutnya"
-            className={cn(tombolNav, "bg-gold-300 text-navy-950 shadow-glow hover:bg-gold-200")}
+            className={cn(tombolNav, "bg-white text-navy-950 ring-1 ring-inset ring-navy-200 hover:bg-navy-50")}
           >
             <IconChevronRight className="size-5" />
           </button>
         </div>
       </div>
 
-      {/* Viewport Carousel dengan Tinggi Terkunci Permanen (Zero-CLS) */}
+      {/* Viewport Carousel dengan Tinggi Terkunci Permanen (Zero-CLS).
+          Hanya dipotong ke samping (overflow-x: clip) — sumbu vertikal tetap
+          terlihat agar bayangan kartu tengah tidak terpotong lurus di tepi bawah. */}
       <div
         ref={containerRef}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        className="relative mx-auto w-full min-h-[21rem] sm:min-h-[25rem] overflow-hidden py-3"
+        className="relative mx-auto w-full min-h-[21rem] sm:min-h-[25rem] overflow-x-clip py-3"
       >
         <div
           style={{
@@ -287,12 +299,12 @@ export function KategoriFleksibel({
                 {/* Kontainer kartu dengan efek hover halus melayang (300ms cubic-bezier) */}
                 <div
                   className={cn(
-                    "relative flex flex-col justify-between overflow-hidden rounded-[1.75rem] sm:rounded-[2.25rem] border p-5 sm:p-7 h-[19.5rem] sm:h-[23.5rem] origin-bottom transform-gpu",
+                    "relative flex flex-col justify-between overflow-hidden rounded-bar sm:rounded-panel border p-5 sm:p-7 h-[19.5rem] sm:h-[23.5rem] origin-bottom transform-gpu",
                     cardTransition,
                     isCenter
-                      ? "bg-navy-950 text-white border-navy-900 shadow-[0_24px_50px_-12px_rgba(10,15,30,0.45)] ring-1 ring-white/10 scale-100 translate-y-0 opacity-100"
+                      ? "bg-navy-950 text-white border-navy-900 shadow-float ring-1 ring-white/10 scale-100 translate-y-0 opacity-100"
                       : isInteractive
-                        ? "bg-white text-navy-950 border-navy-200/90 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.08)] scale-[0.88] translate-y-2 opacity-85 group-hover:opacity-100 group-hover:scale-[0.91] group-hover:-translate-y-1 group-hover:border-navy-400 group-hover:shadow-lift"
+                        ? "bg-white text-navy-950 border-navy-200/90 shadow-soft scale-[0.88] translate-y-2 opacity-85 group-hover:opacity-100 group-hover:scale-[0.91] group-hover:-translate-y-1 group-hover:border-navy-400 group-hover:shadow-lift"
                         : "bg-white/70 text-navy-950 border-navy-200/40 scale-[0.78] translate-y-6 opacity-0 pointer-events-none",
                   )}
                 >
@@ -390,12 +402,12 @@ export function KategoriFleksibel({
                       onClick={(e) => {
                         e.stopPropagation();
                       }}
-                      className="group/cta inline-flex w-full items-center justify-between gap-1.5 sm:gap-2 rounded-full bg-gold-300 px-3.5 py-2.5 sm:px-5 sm:py-3 text-xs sm:text-sm font-semibold text-navy-950 shadow-glow transition-all duration-200 hover:scale-[1.02] hover:bg-gold-200 active:scale-98"
+                      className="pressable group/cta inline-flex w-full items-center justify-between gap-1.5 sm:gap-2 rounded-full bg-gold-300 px-3.5 py-2.5 sm:px-5 sm:py-3 text-xs sm:text-sm font-semibold text-navy-950 hover:bg-gold-200"
                     >
                       <span className="truncate">
                         Lihat Kegiatan <span className="hidden sm:inline">{kategori}</span>
                       </span>
-                      <IconArrowRight className="size-3.5 sm:size-4 shrink-0 transition-transform duration-200 group-hover/cta:translate-x-1" />
+                      <IconArrowRight className="size-3.5 sm:size-4 shrink-0 transition-transform duration-200 ease-out group-hover/cta:translate-x-0.5" />
                     </Link>
                   </div>
                 </div>
@@ -413,7 +425,7 @@ export function KategoriFleksibel({
             <span
               key={idx}
               className={cn(
-                "h-1.5 rounded-full transition-all duration-500 ease-out",
+                "h-1.5 rounded-full transition-[width,background-color] duration-300 ease-out",
                 idx === activeKategoriIndex ? "w-7 bg-navy-950 shadow-sm" : "w-1.5 bg-navy-200",
               )}
             />

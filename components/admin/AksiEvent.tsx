@@ -14,7 +14,7 @@ import {
   IconClose,
   IconEdit,
   IconEye,
-  IconSparkle,
+  IconStar,
   IconTrash,
 } from "@/components/ui/Icons";
 import { hapusEvent, ubahStatusEvent, ubahUnggulanEvent } from "@/lib/actions/events";
@@ -86,7 +86,7 @@ export function AksiEvent({
       <TombolAksi
         label={unggulan ? "Lepas unggulan" : "Jadikan unggulan"}
         ikonSaja
-        ikon={<IconSparkle />}
+        ikon={<IconStar />}
         onAksi={() => jalankan(ubahUnggulanEvent(id, !unggulan))}
       />
 

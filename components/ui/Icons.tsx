@@ -77,28 +77,6 @@ export function IconCross(props: IconProps) {
   );
 }
 
-export function IconSparkle(props: IconProps) {
-  return (
-    <Svg {...props}>
-      <path d="M12 3.5c.5 4.2 2.3 6 6.5 6.5-4.2.5-6 2.3-6.5 6.5-.5-4.2-2.3-6-6.5-6.5 4.2-.5 6-2.3 6.5-6.5Z" />
-      <path d="M19 16.5c.2 1.4.8 2 2.2 2.2-1.4.2-2 .8-2.2 2.2-.2-1.4-.8-2-2.2-2.2 1.4-.2 2-.8 2.2-2.2Z" />
-    </Svg>
-  );
-}
-
-export function IconLamp(props: IconProps) {
-  return (
-    <Svg {...props}>
-      <path d="M12 2.5c1.4 1.8 2.2 3.2 2.2 4.6a2.2 2.2 0 1 1-4.4 0c0-1.4.8-2.8 2.2-4.6Z" />
-      <path d="M10 9.5h4" />
-      <path d="M7 10c0 3 2.2 4.5 5 4.5s5-1.5 5-4.5" />
-      <path d="M12 14.5v4" />
-      <path d="M8 18.5h8" />
-      <path d="M4.5 5.5l1.5 1.5M19.5 5.5l-1.5 1.5M3 11h2M19 11h2" />
-    </Svg>
-  );
-}
-
 export function IconUsers(props: IconProps) {
   return (
     <Svg {...props}>
@@ -550,6 +528,51 @@ export function IconCompass(props: IconProps) {
     <Svg {...props}>
       <circle cx="12" cy="12" r="8.5" />
       <path d="m15.5 8.5-2 5-5 2 2-5 5-2Z" />
+    </Svg>
+  );
+}
+
+export function IconCopy(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2.25" />
+      <path d="M15.5 8.5V6.25A2.25 2.25 0 0 0 13.25 4h-7A2.25 2.25 0 0 0 4 6.25v7a2.25 2.25 0 0 0 2.25 2.25H8.5" />
+    </Svg>
+  );
+}
+
+export function IconChevronUp(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="m6 15 6-6 6 6" />
+    </Svg>
+  );
+}
+
+export function IconChevronDown(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="m6 9 6 6 6-6" />
+    </Svg>
+  );
+}
+
+export function IconList(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M9 6h11M9 12h11M9 18h11" />
+      <circle cx="4.5" cy="6" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="4.5" cy="12" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="4.5" cy="18" r="0.9" fill="currentColor" stroke="none" />
+    </Svg>
+  );
+}
+
+export function IconChart(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 20h16" />
+      <path d="M7 16v-5M12 16V7M17 16v-8" />
     </Svg>
   );
 }

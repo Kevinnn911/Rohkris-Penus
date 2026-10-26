@@ -13,11 +13,6 @@ export function HeroBackdrop({ variant = "full" }: { variant?: "full" | "subtle"
 
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-      {/* Lingkaran tipis dekoratif seperti pada referensi */}
-      <div className="absolute -left-16 top-24 size-72 rounded-full border border-white/70" />
-      <div className="absolute left-6 top-40 size-28 rounded-full border border-white/60" />
-      <div className="absolute -right-24 top-28 size-96 rounded-full border border-white/70" />
-
       <svg
         viewBox="0 0 1440 520"
         preserveAspectRatio="xMidYMax slice"
@@ -72,7 +67,7 @@ export function HeroBackdrop({ variant = "full" }: { variant?: "full" | "subtle"
       </svg>
 
       {/* Kabut terang di belakang judul agar teks selalu terbaca */}
-      <div className="absolute left-1/2 top-[18%] h-[55%] w-[min(56rem,95%)] -translate-x-1/2 rounded-full bg-[#f1f2f4]/80 blur-3xl" />
+      <div className="absolute left-1/2 top-[18%] h-[55%] w-[min(56rem,95%)] -translate-x-1/2 rounded-full bg-white/60 blur-3xl" />
 
       {/* Kabut putih di bawah agar konten tetap terbaca */}
       <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-white/70 to-transparent" />

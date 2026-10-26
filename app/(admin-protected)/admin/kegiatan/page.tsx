@@ -4,7 +4,7 @@ import { AksiEvent } from "@/components/admin/AksiEvent";
 import { KartuTabel, KepalaHalamanAdmin, KosongAdmin, kelasTabel } from "@/components/admin/Fields";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
-import { IconCalendar, IconPlus, IconSparkle } from "@/components/ui/Icons";
+import { IconCalendar, IconPlus, IconStar } from "@/components/ui/Icons";
 import { requireAdmin } from "@/lib/auth/guard";
 import { getSemuaEvent } from "@/lib/data/admin";
 import { formatTanggalSingkat } from "@/lib/format/date";
@@ -99,7 +99,7 @@ export default async function KelolaKegiatanPage() {
                         </Link>
                         {event.is_featured ? (
                           <Badge tone="gold">
-                            <IconSparkle className="size-3.5" />
+                            <IconStar className="size-3.5" />
                             Unggulan
                           </Badge>
                         ) : null}
@@ -121,6 +121,15 @@ export default async function KelolaKegiatanPage() {
                       <Badge tone={pendaftaran.tone}>
                         {pendaftaran.text}
                       </Badge>
+                      {event.registration_mode === "internal" ? (
+                        <Link
+                          href={`/admin/kegiatan/${event.id}/respons`}
+                          className="mt-1.5 block text-xs text-navy-600 underline-offset-4 hover:text-navy-950 hover:underline"
+                        >
+                          Formulir internal · {event.form?.responseCount ?? 0}
+                          {event.form?.quota ? `/${event.form.quota}` : ""} respons
+                        </Link>
+                      ) : null}
                     </td>
                     <td className={`${kelasTabel.td} min-w-[25rem]`}>
                       <AksiEvent

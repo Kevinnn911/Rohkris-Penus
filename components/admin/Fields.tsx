@@ -16,7 +16,7 @@ import { cn } from "@/lib/cn";
 // Warna border/latar dipisah per keadaan: `cn` tidak menggabungkan kelas Tailwind yang
 // bertabrakan, jadi kelas normal dan error tidak boleh muncul bersamaan.
 const inputDasar =
-  "block w-full min-h-12 rounded-2xl border px-4 py-3 text-[0.9375rem] text-navy-950 " +
+  "block w-full min-h-12 rounded-2xl border px-4 py-3 text-md text-navy-950 " +
   "placeholder:text-navy-400 " +
   "transition-[border-color,box-shadow,background-color] duration-150 ease-out " +
   "focus:outline-none focus:ring-4 focus-visible:outline-none " +
@@ -34,8 +34,8 @@ function kelasInput(adaError: boolean, ...tambahan: string[]) {
 /** Label tebal dengan titik kuning kecil di depannya (detail referensi). */
 function LabelField({ htmlFor, label, wajib }: { htmlFor: string; label: string; wajib?: boolean }) {
   return (
-    <label htmlFor={htmlFor} className="block text-[0.9375rem] font-semibold tracking-[-0.01em] text-navy-950">
-      <span className="label-dot">{label}</span>
+    <label htmlFor={htmlFor} className="block text-sm font-semibold text-navy-950">
+      {label}
       {wajib ? (
         <span className="ml-1 text-danger-600" aria-hidden="true">
           *
@@ -242,7 +242,7 @@ export function CheckboxField({
   bantuan?: string;
 }) {
   return (
-    <div className="relative flex items-start gap-4 rounded-2xl border border-navy-200 bg-white p-4 transition-colors hover:border-navy-300 has-checked:border-navy-950 has-checked:bg-gold-50 has-focus-visible:ring-4 has-focus-visible:ring-gold-200 sm:p-5">
+    <div className="relative flex items-start gap-4 rounded-2xl border border-navy-200 bg-white p-4 transition-[border-color,background-color,scale] duration-150 ease-out hover:border-navy-300 active:scale-[0.99] has-checked:border-navy-950 has-checked:bg-gold-50 has-focus-visible:ring-4 has-focus-visible:ring-gold-200 sm:p-5">
       <input
         id={id}
         name={name}
@@ -255,7 +255,7 @@ export function CheckboxField({
         {/* Seluruh kartu dapat diklik: area label diperluas lewat pseudo-elemen. */}
         <label
           htmlFor={id}
-          className="cursor-pointer text-[0.9375rem] font-semibold tracking-[-0.01em] text-navy-950 after:absolute after:inset-0 after:rounded-2xl"
+          className="cursor-pointer text-md font-semibold text-navy-950 after:absolute after:inset-0 after:rounded-2xl"
         >
           {label}
         </label>
@@ -290,12 +290,12 @@ export function FieldGroup({
           {ikon ? (
             <span
               aria-hidden="true"
-              className="grid size-11 shrink-0 place-items-center rounded-full bg-gold-300 text-navy-950 [&>svg]:size-5"
+              className="grid size-11 shrink-0 place-items-center rounded-full bg-navy-50 text-navy-700 ring-1 ring-inset ring-navy-200/80 [&>svg]:size-5"
             >
               {ikon}
             </span>
           ) : null}
-          <span className="text-xl font-bold tracking-[-0.03em] text-navy-950">{judul}</span>
+          <span className="text-xl font-bold tracking-heading text-navy-950">{judul}</span>
         </span>
       </legend>
       <div className="clear-both px-5 sm:px-8">
@@ -331,14 +331,10 @@ export function KepalaHalamanAdmin({
   children?: ReactNode;
 }) {
   return (
-    <header className="flex animate-fade-up flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+    <header className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0 max-w-2xl">
-        {eyebrow ? (
-          <p className="mb-3 text-sm font-medium text-navy-500">
-            <span className="label-dot">{eyebrow}</span>
-          </p>
-        ) : null}
-        <h1 className="text-3xl font-bold leading-[1.08] tracking-[-0.04em] text-balance text-navy-950 sm:text-[2.75rem]">
+        {eyebrow ? <p className="mb-2 text-sm font-medium text-navy-600">{eyebrow}</p> : null}
+        <h1 className="text-3xl font-bold leading-[1.08] tracking-display text-balance text-navy-950 [overflow-wrap:anywhere] sm:text-[2.75rem]">
           {judul}
         </h1>
         {deskripsi ? (
@@ -365,13 +361,13 @@ export function RemahRoti({
         <li>
           <Link
             href={induk.href}
-            className="group inline-flex min-h-11 items-center gap-2 rounded-full bg-white py-1.5 pl-1.5 pr-4 font-medium text-navy-950 ring-1 ring-inset ring-navy-200 transition-colors hover:bg-navy-50 hover:ring-navy-300"
+            className="pressable group inline-flex min-h-11 items-center gap-2 rounded-full bg-white py-1.5 pl-1.5 pr-4 font-medium text-navy-950 ring-1 ring-inset ring-navy-200 hover:bg-navy-50 hover:ring-navy-300"
           >
             <span
               aria-hidden="true"
-              className="grid size-8 place-items-center rounded-full bg-navy-100 transition-colors group-hover:bg-gold-300"
+              className="grid size-8 place-items-center rounded-full bg-navy-100 transition-colors duration-200 group-hover:bg-navy-200"
             >
-              <IconChevronLeft className="size-4 transition-transform group-hover:-translate-x-0.5" />
+              <IconChevronLeft className="size-4 transition-transform duration-200 ease-out group-hover:-translate-x-0.5" />
             </span>
             {induk.label}
           </Link>
@@ -405,11 +401,11 @@ export function KosongAdmin({
     <div className="rounded-panel border border-navy-200/80 bg-white px-6 py-16 text-center sm:py-20">
       <span
         aria-hidden="true"
-        className="mx-auto grid size-16 place-items-center rounded-full bg-gold-300 text-navy-950 [&>svg]:size-7"
+        className="mx-auto grid size-14 place-items-center rounded-full bg-navy-50 text-navy-700 ring-1 ring-inset ring-navy-200/80 [&>svg]:size-6"
       >
         {ikon}
       </span>
-      <h2 className="mt-6 text-xl font-bold tracking-[-0.03em] text-navy-950 sm:text-2xl">{judul}</h2>
+      <h2 className="mt-5 text-xl font-bold tracking-heading text-navy-950 sm:text-2xl">{judul}</h2>
       <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-navy-500 sm:text-base">
         {deskripsi}
       </p>
@@ -433,8 +429,8 @@ export const kelasTabel = {
   thead: "border-b border-navy-100 text-xs font-medium text-navy-500",
   th: "px-5 py-4 font-medium whitespace-nowrap first:pl-6 last:pr-6",
   tbody: "divide-y divide-navy-100",
-  tr: "align-top transition-colors hover:bg-navy-50",
+  tr: "align-top transition-colors duration-150 hover:bg-navy-50",
   td: "px-5 py-4 first:pl-6 last:pr-6",
   tautanJudul:
-    "font-semibold tracking-[-0.01em] text-navy-950 underline-offset-4 decoration-gold-500 decoration-[3px] hover:underline",
+    "font-semibold text-navy-950 underline-offset-4 decoration-gold-500 decoration-[3px] [overflow-wrap:anywhere] hover:underline",
 } as const;

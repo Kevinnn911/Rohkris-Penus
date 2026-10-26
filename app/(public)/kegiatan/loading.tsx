@@ -6,7 +6,7 @@ export default function Loading() {
       {/* Kerangka kartu header terang */}
       <div className="px-3 sm:px-5">
         <div className="mx-auto flex max-w-7xl flex-col items-center rounded-hero bg-mist px-5 pb-20 pt-14 sm:pb-24 sm:pt-20">
-          <Skeleton className="h-7 w-24 rounded-full" />
+          <Skeleton className="h-4 w-20" />
           <Skeleton className="mt-6 h-12 w-full max-w-md rounded-2xl sm:h-16" />
           <Skeleton className="mt-5 h-5 w-full max-w-xl" />
           <Skeleton className="mt-2 h-5 w-full max-w-sm" />
@@ -15,7 +15,7 @@ export default function Loading() {
 
       {/* Kerangka toolbar filter melayang */}
       <div className="relative z-10 mx-auto -mt-8 max-w-6xl px-4 sm:-mt-10 sm:px-8">
-        <div className="rounded-[1.75rem] bg-white p-4 shadow-float sm:p-6">
+        <div className="rounded-bar bg-white p-4 shadow-float sm:p-6">
           <div className="flex items-center gap-3 px-1 pb-4">
             <Skeleton className="size-11 rounded-full" />
             <Skeleton className="h-4 w-32" />

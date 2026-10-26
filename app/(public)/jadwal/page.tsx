@@ -81,11 +81,11 @@ export default async function JadwalPage() {
                 {perBulan.map((grup) => (
                   <li key={grup.bulan}>
                     <div className="flex items-center gap-4">
-                      <h2 className="text-xl font-bold tracking-[-0.03em] text-navy-950 sm:text-2xl">
-                        <span className="label-dot capitalize">{grup.bulan}</span>
+                      <h2 className="text-xl font-bold tracking-heading text-navy-950 sm:text-2xl">
+                        <span className="capitalize">{grup.bulan}</span>
                       </h2>
                       <span aria-hidden="true" className="h-px flex-1 bg-navy-200" />
-                      <span className="text-sm font-medium text-navy-500">
+                      <span className="shrink-0 text-sm font-medium text-navy-500">
                         {grup.items.length} agenda
                       </span>
                     </div>
@@ -101,20 +101,21 @@ export default async function JadwalPage() {
                             <Link
                               href={`/kegiatan/${event.slug}`}
                               className={cn(
-                                "group flex items-stretch gap-4 rounded-card border bg-white p-2.5 pr-4 transition-[box-shadow,transform,border-color] duration-300 hover:-translate-y-1 hover:shadow-lift sm:gap-6 sm:pr-6",
-                                terdekat ? "border-navy-950/80 shadow-soft" : "border-navy-200/80 hover:border-navy-300",
+                                "card-interactive group flex items-stretch gap-4 rounded-card border bg-white p-2.5 pr-4 sm:gap-6 sm:pr-6",
+                                // Agenda terdekat mempertahankan tepi gelapnya saat hover (card-interactive memudarkannya).
+                                terdekat ? "border-navy-950/80 shadow-soft hover:border-navy-950/80!" : "border-navy-200/80",
                               )}
                             >
                               {/* Blok tanggal */}
                               <div
                                 aria-hidden="true"
                                 className={cn(
-                                  "flex w-[4.75rem] shrink-0 flex-col items-center justify-center rounded-[1.1rem] py-3 text-navy-950 sm:w-24",
+                                  "flex w-[4.75rem] shrink-0 flex-col items-center justify-center rounded-inner py-3 text-navy-950 sm:w-24",
                                   terdekat ? "bg-gold-300" : "bg-navy-100",
                                 )}
                               >
                                 <span className="text-xs font-medium capitalize">{tgl.hariPendek}</span>
-                                <span className="text-3xl font-bold leading-none tracking-[-0.04em] sm:text-4xl">
+                                <span className="text-3xl font-bold leading-none tracking-display sm:text-4xl">
                                   {tgl.hari}
                                 </span>
                                 <span className="mt-1 text-xs font-medium uppercase">{tgl.bulanPendek}</span>
@@ -122,11 +123,11 @@ export default async function JadwalPage() {
 
                               <div className="min-w-0 flex-1 py-2">
                                 {terdekat ? (
-                                  <p className="mb-1.5 text-xs font-semibold text-navy-950">
-                                    <span className="label-dot">Paling dekat</span>
+                                  <p className="mb-1 text-xs font-medium text-navy-600">
+                                    Paling dekat
                                   </p>
                                 ) : null}
-                                <h3 className="text-lg font-semibold leading-snug tracking-[-0.015em] text-navy-950">
+                                <h3 className="text-lg font-semibold leading-snug tracking-heading text-navy-950 [overflow-wrap:anywhere]">
                                   {event.title}
                                 </h3>
 
@@ -141,7 +142,7 @@ export default async function JadwalPage() {
                                   {event.location ? (
                                     <p className="flex items-start gap-2">
                                       <IconMapPin className="mt-0.5 size-4 shrink-0 text-navy-500" />
-                                      <span className="min-w-0 break-words">{event.location}</span>
+                                      <span className="min-w-0 [overflow-wrap:anywhere]">{event.location}</span>
                                     </p>
                                   ) : null}
                                 </div>
@@ -156,9 +157,9 @@ export default async function JadwalPage() {
 
                               <span
                                 aria-hidden="true"
-                                className="hidden size-11 shrink-0 place-items-center self-center rounded-full bg-navy-100 text-navy-950 transition-colors duration-300 group-hover:bg-gold-300 sm:grid"
+                                className="hidden size-11 shrink-0 place-items-center self-center rounded-full bg-navy-100 text-navy-950 transition-colors duration-200 group-hover:bg-navy-200 sm:grid"
                               >
-                                <IconArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                                <IconArrowRight className="size-4 transition-transform duration-200 ease-out group-hover:translate-x-0.5" />
                               </span>
                             </Link>
                           </li>
@@ -175,7 +176,7 @@ export default async function JadwalPage() {
               <section aria-labelledby="judul-belum-dijadwalkan">
                 <h2
                   id="judul-belum-dijadwalkan"
-                  className="text-xl font-bold tracking-[-0.03em] text-navy-950 sm:text-2xl"
+                  className="text-xl font-bold tracking-heading text-navy-950 sm:text-2xl"
                 >
                   Belum Dijadwalkan
                 </h2>
@@ -187,7 +188,7 @@ export default async function JadwalPage() {
                     <li key={event.id}>
                       <Link
                         href={`/kegiatan/${event.slug}`}
-                        className="flex h-full items-start gap-4 rounded-card border border-dashed border-navy-300 bg-white/60 p-5 transition-colors hover:bg-white"
+                        className="card-interactive flex h-full items-start gap-4 rounded-card border border-dashed border-navy-300 bg-white/60 p-5"
                       >
                         <span
                           aria-hidden="true"
@@ -200,7 +201,7 @@ export default async function JadwalPage() {
                             <Badge tone="gold">{event.category}</Badge>
                             <Badge tone="neutral">Tanggal akan diumumkan</Badge>
                           </div>
-                          <h3 className="mt-2.5 font-semibold text-navy-950">{event.title}</h3>
+                          <h3 className="mt-2.5 font-semibold tracking-heading text-navy-950 [overflow-wrap:anywhere]">{event.title}</h3>
                         </div>
                       </Link>
                     </li>

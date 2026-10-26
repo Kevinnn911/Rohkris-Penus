@@ -32,7 +32,7 @@ export function NavAdminLink({
       href={href}
       aria-current={aktif ? "page" : undefined}
       className={cn(
-        "group flex min-h-11 items-center gap-3 whitespace-nowrap rounded-full px-4 text-sm transition-colors duration-200",
+        "pressable group flex min-h-11 items-center gap-3 whitespace-nowrap rounded-full px-4 text-sm",
         aktif
           ? "bg-gold-300 font-medium text-navy-950"
           : "bg-white text-navy-700 ring-1 ring-inset ring-navy-200 hover:bg-navy-50 hover:text-navy-950 lg:ring-0",

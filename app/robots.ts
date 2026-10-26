@@ -10,8 +10,8 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        // Panel admin tidak boleh diindeks.
-        disallow: ["/admin", "/admin/"],
+        // Panel admin & tautan rahasia ubah jawaban tidak boleh diindeks.
+        disallow: ["/admin", "/admin/", "/kegiatan/*/daftar/ubah/"],
       },
     ],
     sitemap: `${base}/sitemap.xml`,

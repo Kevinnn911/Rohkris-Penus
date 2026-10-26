@@ -1,10 +1,12 @@
 import "server-only";
 
 import { query, queryOne } from "@/lib/db";
+import { lampirkanFormulir } from "@/lib/data/forms";
 import type {
   AdminUser,
   AnnouncementRow,
   EventRow,
+  EventWithForm,
   MediaItemRow,
   NewsPostRow,
 } from "@/lib/db/types";
@@ -26,8 +28,12 @@ async function aman<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
   }
 }
 
-export async function getSemuaEvent(): Promise<EventRow[]> {
-  return aman(() => query<EventRow>("SELECT * FROM events ORDER BY start_at IS NULL, start_at DESC"), []);
+export async function getSemuaEvent(): Promise<EventWithForm[]> {
+  const events = await aman(
+    () => query<EventRow>("SELECT * FROM events ORDER BY start_at IS NULL, start_at DESC"),
+    [],
+  );
+  return lampirkanFormulir(events);
 }
 
 export async function getEventById(id: string): Promise<EventRow | null> {

@@ -37,7 +37,7 @@ export function FormLogin({ secretKey }: { secretKey?: string }) {
         autoComplete="current-password"
       />
 
-      <div className="pt-1 [&>button]:min-h-12 [&>button]:w-full [&>button]:text-[0.9375rem]">
+      <div className="pt-1 [&>button]:min-h-12 [&>button]:w-full [&>button]:text-md">
         <SubmitButton labelLoading="Memproses…">Masuk</SubmitButton>
       </div>
 

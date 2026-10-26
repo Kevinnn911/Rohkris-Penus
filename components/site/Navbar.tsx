@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Fragment, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
-import { IconClose, IconCross, IconMenu } from "@/components/ui/Icons";
+import { buttonClasses } from "@/components/ui/Button";
+import { IconChevronRight, IconClose, IconCross, IconMenu } from "@/components/ui/Icons";
 import { cn } from "@/lib/cn";
 
 const NAV_ITEMS = [
@@ -22,7 +23,7 @@ export function LogoMark({ className, inverted = false }: { className?: string; 
     <span
       aria-hidden="true"
       className={cn(
-        "grid size-9 shrink-0 place-items-center rounded-[0.8rem]",
+        "grid size-9 shrink-0 place-items-center rounded-xl",
         inverted ? "bg-white text-navy-950" : "bg-navy-950 text-gold-300",
         className,
       )}
@@ -87,7 +88,7 @@ export function Navbar() {
     <header className="sticky top-0 z-40 px-3 pt-3 sm:px-5">
       <div
         className={cn(
-          "mx-auto max-w-7xl rounded-[1.75rem] transition-[background-color,box-shadow] duration-300",
+          "mx-auto max-w-7xl rounded-bar transition-[background-color,box-shadow] duration-200 ease-out",
           scrolled || open ? "bg-white/85 shadow-float backdrop-blur-xl" : "bg-transparent",
         )}
       >
@@ -100,30 +101,23 @@ export function Navbar() {
             <span className="sr-only">— Beranda Rohani Kristen SMK PLUS Pelita Nusantara</span>
           </Link>
 
-          {/* Navigasi desktop — dipisah titik, item aktif berupa pill kuning */}
-          <ul className="hidden items-center lg:flex">
-            {NAV_ITEMS.map((item, index) => (
-              <Fragment key={item.href}>
-                {index > 0 ? (
-                  <li aria-hidden="true" className="px-1 text-navy-400">
-                    ·
-                  </li>
-                ) : null}
-                <li>
-                  <Link
-                    href={item.href}
-                    aria-current={isActive(item.href) ? "page" : undefined}
-                    className={cn(
-                      "block rounded-full px-3.5 py-1.5 text-[0.9375rem] transition-colors duration-200",
-                      isActive(item.href)
-                        ? "bg-gold-300 font-medium text-navy-950"
-                        : "text-navy-900 hover:bg-navy-100",
-                    )}
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              </Fragment>
+          {/* Navigasi desktop — item aktif berupa pill kuning */}
+          <ul className="hidden items-center gap-1 lg:flex">
+            {NAV_ITEMS.map((item) => (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  aria-current={isActive(item.href) ? "page" : undefined}
+                  className={cn(
+                    "pressable block rounded-full px-3.5 py-1.5 text-md",
+                    isActive(item.href)
+                      ? "bg-gold-300 font-medium text-navy-950"
+                      : "text-navy-700 hover:bg-navy-100 hover:text-navy-950",
+                  )}
+                >
+                  {item.label}
+                </Link>
+              </li>
             ))}
           </ul>
 
@@ -131,16 +125,20 @@ export function Navbar() {
             <Link
               href="/kontak"
               aria-current={isActive("/kontak") ? "page" : undefined}
-              className="hidden text-[0.9375rem] text-navy-900 underline-offset-4 hover:underline lg:inline"
+              className="hidden text-md text-navy-700 underline-offset-4 transition-colors hover:text-navy-950 hover:underline lg:inline"
             >
               Kontak
             </Link>
-            <Link
-              href="/kegiatan?status=pendaftaran"
-              className="hidden min-h-11 items-center rounded-full bg-navy-950 px-6 text-[0.9375rem] font-semibold text-white shadow-[0_10px_24px_-12px_rgb(13_13_15/0.7)] transition-colors hover:bg-navy-800 sm:inline-flex"
-            >
-              Daftar Kegiatan
-            </Link>
+            {/* Visibilitas diatur pembungkus: `cn` hanya clsx (tanpa tailwind-merge),
+                jadi `hidden` tidak bisa menimpa `inline-flex` milik buttonClasses. */}
+            <span className="hidden sm:contents">
+              <Link
+                href="/kegiatan?status=pendaftaran"
+                className={buttonClasses("primary", "md", "whitespace-nowrap font-semibold")}
+              >
+                Daftar Kegiatan
+              </Link>
+            </span>
 
             {/* Tombol menu ponsel */}
             <button
@@ -148,7 +146,7 @@ export function Navbar() {
               onClick={() => setOpen((value) => !value)}
               aria-expanded={open}
               aria-controls="menu-ponsel"
-              className="inline-flex size-11 items-center justify-center rounded-full bg-white text-navy-950 shadow-soft ring-1 ring-navy-100 transition-colors hover:bg-navy-50 lg:hidden"
+              className="pressable inline-flex size-11 items-center justify-center rounded-full bg-white text-navy-950 shadow-soft ring-1 ring-navy-100 hover:bg-navy-50 lg:hidden"
             >
               <span className="sr-only">{open ? "Tutup menu navigasi" : "Buka menu navigasi"}</span>
               {open ? <IconClose className="size-5" /> : <IconMenu className="size-5" />}
@@ -157,7 +155,10 @@ export function Navbar() {
         </nav>
 
         {open ? (
-          <div id="menu-ponsel" className="px-3 pb-4 lg:hidden">
+          <div
+            id="menu-ponsel"
+            className="px-3 pb-4 transition-[opacity,translate] duration-200 ease-out starting:-translate-y-1 starting:opacity-0 lg:hidden"
+          >
             <ul className="grid gap-1 border-t border-navy-100 pt-3">
               {[...NAV_ITEMS, { href: "/kontak", label: "Kontak" } as const].map((item) => (
                 <li key={item.href}>
@@ -165,23 +166,21 @@ export function Navbar() {
                     href={item.href}
                     aria-current={isActive(item.href) ? "page" : undefined}
                     className={cn(
-                      "flex items-center justify-between rounded-2xl px-4 py-3.5 text-[0.95rem]",
+                      "pressable flex items-center justify-between rounded-2xl px-4 py-3.5 text-md",
                       isActive(item.href)
                         ? "bg-gold-300 font-medium text-navy-950"
                         : "text-navy-900 hover:bg-navy-50",
                     )}
                   >
                     {item.label}
-                    <span aria-hidden="true" className="text-navy-400">
-                      →
-                    </span>
+                    <IconChevronRight className="size-4 text-navy-400" />
                   </Link>
                 </li>
               ))}
               <li className="pt-2 sm:hidden">
                 <Link
                   href="/kegiatan?status=pendaftaran"
-                  className="flex min-h-12 items-center justify-center rounded-full bg-navy-950 text-[0.95rem] font-semibold text-white"
+                  className={buttonClasses("primary", "lg", "w-full font-semibold")}
                 >
                   Daftar Kegiatan
                 </Link>

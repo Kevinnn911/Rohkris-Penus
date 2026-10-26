@@ -6,7 +6,7 @@ export default async function PublicLayout({ children }: { children: React.React
   const settings = await getSiteSettings();
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-dvh flex-col">
       <a href="#konten-utama" className="skip-link rounded-lg bg-navy-800 px-4 py-2 text-ivory-50">
         Lewati ke konten utama
       </a>

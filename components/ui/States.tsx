@@ -23,10 +23,10 @@ export function EmptyState({
   return (
     <div className="relative overflow-hidden rounded-panel border border-navy-200/80 bg-white px-6 py-16 text-center">
       <div className="relative">
-        <span className="mx-auto grid size-16 place-items-center rounded-full bg-gold-300 text-navy-950">
-          {icon ?? <IconDove className="size-7" />}
+        <span className="mx-auto grid size-14 place-items-center rounded-full bg-navy-50 text-navy-700 ring-1 ring-inset ring-navy-200/80">
+          {icon ?? <IconDove className="size-6" />}
         </span>
-        <h3 className="mt-6 text-xl font-semibold tracking-[-0.02em] text-navy-950">{title}</h3>
+        <h3 className="mt-5 text-xl font-semibold tracking-heading text-navy-950">{title}</h3>
         {description ? (
           <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-navy-600">{description}</p>
         ) : null}
@@ -75,7 +75,7 @@ export function Skeleton({ className }: { className?: string }) {
 export function EventCardSkeleton() {
   return (
     <div className="rounded-card border border-navy-200/80 bg-white p-2.5">
-      <Skeleton className="aspect-[4/3] rounded-[1.1rem]" />
+      <Skeleton className="aspect-[4/3] rounded-inner" />
       <div className="space-y-3 px-3 pb-3 pt-4">
         <Skeleton className="h-4 w-24" />
         <Skeleton className="h-6 w-3/4" />
@@ -105,7 +105,7 @@ export function CardGridSkeleton({ count = 6 }: { count?: number }) {
 export function SetupNotice() {
   return (
     <div className="flex flex-col gap-4 rounded-card border border-navy-200/80 bg-white px-6 py-5 sm:flex-row sm:items-start">
-      <span className="grid size-11 shrink-0 place-items-center rounded-full bg-gold-300 text-navy-950">
+      <span className="grid size-11 shrink-0 place-items-center rounded-full bg-navy-50 text-navy-700 ring-1 ring-inset ring-navy-200/80">
         <IconDatabase className="size-5" />
       </span>
       <div>
