@@ -433,3 +433,19 @@
 * **Impact:**
   - Pengurus Rohkris kini memiliki kontrol penuh atas formulir pendaftaran acara langsung di website sekolah tanpa bergantung pada Google Forms pihak ketiga.
   - Data peserta tersimpan aman di database hosting sendiri dan dapat diekspor langsung ke spreadsheet format CSV.
+
+## [DONE] Verifikasi Kesiapan Deployment cPanel dan Pembaruan Arsip Distribusi Produksi
+
+* **Status:** Selesai (100% Production Ready for cPanel)
+* **Feature:** Audit integritas kualitas kode, pengujian unit, kompilasi build standalone, dan sinkronisasi arsip deployment Linux cPanel
+* **Technical Implementation:**
+  1. Melakukan audit kompilasi TypeScript strict (`npm run typecheck`) dan memastikan status lolos 100% tanpa kesalahan tipe data.
+  2. Menjalankan linter kode (`npm run lint`) dan memverifikasi kepatuhan terhadap standar ESLint Next.js Core Web Vitals tanpa peringatan atau pelanggaran sintaks.
+  3. Menjalankan seluruh pengujian unit otomatis (`npm test` via Vitest): 8 berkas pengujian dan 112 unit tests lolos 100%.
+  4. Mengompilasi ulang bundle produksi Next.js 16 mode standalone (`npm run build` dengan webpack) untuk menghasilkan server mandiri tanpa ketergantungan node_modules lengkap di server hosting.
+  5. Memperbarui arsip siap deploy Linux cPanel:
+     - `rohkris-next.zip` (21.22 MB): menanamkan modul MySQL2 riil, menormalkan path Windows menjadi path absolut Linux hosting (`/home/pvote/rohkris`), serta menyematkan berkas picu reload LiteSpeed Passenger (`tmp/restart.txt`).
+     - `rohkris-build.zip` (18.39 MB): arsip cadangan terkompresi dengan format POSIX.
+  6. Memverifikasi berkas sensitif (`.env.local`, `kredensial_hosting.txt`, `node_modules/`, `storage/`) tetap terisolasi dan diabaikan oleh `.gitignore` untuk mencegah kebocoran data kredensial.
+* **Impact:**
+  - Aplikasi dinyatakan siap 100% untuk diunggah dan diaktifkan di server hosting cPanel `rohkrissmkpenus.web.id` tanpa potensi kegagalan kompilasi atau dependensi path.
