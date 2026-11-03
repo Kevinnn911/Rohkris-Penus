@@ -426,6 +426,7 @@ export function ManajemenTiket({
                     eventTitle={eventTitle}
                     eventDate={eventDate}
                     eventLocation={eventLocation}
+                    checkinStatus={selectedTicket.checkin_status}
                     benefits={selectedTicket.benefits.map((b) => ({
                       key: b.benefit_key,
                       name: b.benefit_name,
@@ -506,3 +507,4 @@ export function ManajemenTiket({
     </div>
   );
 }
+

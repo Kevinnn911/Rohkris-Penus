@@ -37,6 +37,8 @@ import {
   issueTicketInTx,
   parseBenefitsConfig,
   resolveAttendeeName,
+  resolveAttendeeOrg,
+  resolveAttendeePhone,
 } from "@/lib/tickets/data";
 
 /**
@@ -56,11 +58,19 @@ import {
 export type TicketPayload = {
   ticketCode: string;
   attendeeName: string;
+  attendeeEmail?: string | null;
+  attendeePhone?: string | null;
+  attendeeOrg?: string | null;
   qrDataUrl: string;
   benefits: Array<{ key: string; name: string }>;
   eventTitle: string;
+  eventSummary?: string | null;
   eventDate?: string | null;
   eventLocation?: string | null;
+  bannerUrl?: string | null;
+  price?: string | null;
+  orderId?: string | null;
+  whatsappGroupUrl?: string | null;
 };
 
 export type KirimFormulirResult =
@@ -435,14 +445,27 @@ export async function kirimFormulir(eventId: string, formData: FormData): Promis
   if (createdTicketCode) {
     try {
       const qrDataUrl = await generateQrDataUrl(createdTicketCode);
+      const attendeePhone = resolveAttendeePhone(answers, definition);
+      const attendeeOrg = resolveAttendeeOrg(answers, definition);
       ticketPayload = {
         ticketCode: createdTicketCode,
         attendeeName,
+        attendeeEmail: email,
+        attendeePhone,
+        attendeeOrg,
         qrDataUrl,
         benefits,
         eventTitle: event.title,
+        eventSummary: event.summary,
         eventDate: formatRentangKegiatan(event.start_at, event.end_at) ?? formatTanggal(event.start_at),
         eventLocation: event.location,
+        bannerUrl: event.cover_image_url,
+        price: event.cost_info || "Gratis",
+        orderId: responseId,
+        whatsappGroupUrl:
+          event.registration_url && /chat\.whatsapp\.com/i.test(event.registration_url)
+            ? event.registration_url
+            : null,
       };
     } catch (qrErr) {
       console.error("Gagal membuat QR data URL tiket:", (qrErr as Error).message);

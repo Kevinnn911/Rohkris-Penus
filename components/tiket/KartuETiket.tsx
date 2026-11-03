@@ -2,19 +2,26 @@
 
 import type { ReactNode } from "react";
 
-import { IconCalendar, IconCheck, IconMapPin, IconTicket } from "@/components/ui/Icons";
+import { IconMapPin, IconTicket } from "@/components/ui/Icons";
 import { cn } from "@/lib/cn";
 
 export type KartuETiketProps = {
   ticketCode: string;
   attendeeName: string;
   attendeeEmail?: string | null;
+  attendeePhone?: string | null;
+  attendeeOrg?: string | null;
   eventTitle: string;
+  eventSummary?: string | null;
   eventDate?: string | null;
   eventLocation?: string | null;
+  bannerUrl?: string | null;
+  price?: string | null;
+  orderId?: string | null;
   qrDataUrl: string;
   benefits?: Array<{ key: string; name: string; status?: "unclaimed" | "claimed" }>;
   checkinStatus?: "unattended" | "attended";
+  whatsappGroupUrl?: string | null;
   aksiTambahan?: ReactNode;
   id?: string;
 };
@@ -23,154 +30,260 @@ export function KartuETiket({
   ticketCode,
   attendeeName,
   attendeeEmail,
+  attendeePhone,
+  attendeeOrg,
   eventTitle,
+  eventSummary,
   eventDate,
   eventLocation,
+  bannerUrl,
+  price,
+  orderId,
   qrDataUrl,
   benefits = [],
   checkinStatus,
+  whatsappGroupUrl,
   aksiTambahan,
   id = "e-tiket-card",
 }: KartuETiketProps) {
   return (
     <div
       id={id}
-      className="relative mx-auto w-full max-w-xl overflow-hidden rounded-[2rem] border border-navy-200/90 bg-white shadow-float transition-all"
+      className="mx-auto w-full max-w-lg overflow-hidden rounded-2xl border border-zinc-800 bg-[#18181b] text-white shadow-2xl transition-all"
     >
-      {/* Header Tiket: Navy Gelap dengan Aksen Emas */}
-      <div className="relative bg-navy-950 px-6 py-6 text-white sm:px-8 sm:py-7">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <span className="grid size-10 place-items-center rounded-xl bg-white/10 text-gold-300 ring-1 ring-white/20">
-              <IconTicket className="size-5" />
-            </span>
-            <div>
-              <p className="text-[0.7rem] font-bold tracking-widest text-gold-300 uppercase">
-                E-TIKET RESMI
+      {/* 1. Banner Atas (Header Poster) */}
+      <div className="relative aspect-[21/9] w-full overflow-hidden bg-zinc-900 sm:aspect-[16/6]">
+        {bannerUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={bannerUrl}
+            alt={eventTitle}
+            className="size-full object-cover"
+          />
+        ) : (
+          <div className="relative flex size-full items-center justify-between overflow-hidden bg-gradient-to-r from-navy-950 via-zinc-900 to-navy-900 px-6 py-4">
+            <div className="relative z-10">
+              <span className="inline-block text-[10px] font-bold tracking-widest text-gold-300 uppercase">
+                SMK PLUS PELITA NUSANTARA
+              </span>
+              <p className="mt-0.5 text-sm font-bold tracking-heading text-white sm:text-base">
+                ROHANI KRISTEN (ROHKRIS)
               </p>
-              <p className="text-xs text-white/70">SMK Plus Pelita Nusantara</p>
             </div>
-          </div>
-          {checkinStatus === "attended" ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-300 ring-1 ring-emerald-400/30">
-              <IconCheck className="size-3.5" />
-              Sudah Hadir
-            </span>
-          ) : (
-            <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/80 ring-1 ring-white/15">
-              Tiket Sah
-            </span>
-          )}
-        </div>
-
-        <h2 className="mt-4 text-xl font-bold leading-snug tracking-heading text-white sm:text-2xl [overflow-wrap:anywhere]">
-          {eventTitle}
-        </h2>
-
-        {(eventDate || eventLocation) && (
-          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-white/75 sm:text-sm">
-            {eventDate ? (
-              <span className="inline-flex items-center gap-1.5">
-                <IconCalendar className="size-4 shrink-0 text-gold-300" />
-                {eventDate}
-              </span>
-            ) : null}
-            {eventLocation ? (
-              <span className="inline-flex items-center gap-1.5">
-                <IconMapPin className="size-4 shrink-0 text-gold-300" />
-                {eventLocation}
-              </span>
-            ) : null}
+            <div className="relative z-10 flex size-12 shrink-0 items-center justify-center rounded-xl bg-white/10 text-gold-300 ring-1 ring-white/15">
+              <IconTicket className="size-6" />
+            </div>
           </div>
         )}
       </div>
 
-      {/* Garis Potong / Perforasi Tiket */}
-      <div className="relative flex items-center bg-white px-2 py-1">
-        <div className="absolute -left-3 size-6 rounded-full bg-ivory-100 ring-1 ring-inset ring-navy-200/80" />
-        <div className="w-full border-b-2 border-dashed border-navy-200" />
-        <div className="absolute -right-3 size-6 rounded-full bg-ivory-100 ring-1 ring-inset ring-navy-200/80" />
-      </div>
+      {/* 2. Judul Acara, Subjudul, Tanggal & Kode QR Terpusat */}
+      <div className="px-5 pt-5 pb-2 text-center sm:px-6">
+        <h2 className="text-base font-bold leading-snug tracking-heading text-white sm:text-lg [overflow-wrap:anywhere]">
+          {eventTitle}
+        </h2>
+        {eventSummary ? (
+          <p className="mt-1 text-xs text-zinc-400 sm:text-sm">
+            {eventSummary}
+          </p>
+        ) : null}
+        {eventDate ? (
+          <p className="mt-1 text-xs text-zinc-400">
+            {eventDate}
+          </p>
+        ) : null}
 
-      {/* Badan Tiket: Data Peserta & Kode QR */}
-      <div className="px-6 pb-6 pt-3 sm:px-8 sm:pb-8">
-        <div className="grid gap-6 sm:grid-cols-[1fr_auto] sm:items-center">
-          {/* Kolom Informasi Peserta */}
-          <div className="space-y-4">
-            <div>
-              <p className="text-xs font-semibold tracking-wider text-navy-400 uppercase">
-                Nama Peserta
-              </p>
-              <h3 className="mt-0.5 text-xl font-bold text-navy-950 sm:text-2xl [overflow-wrap:anywhere]">
-                {attendeeName}
-              </h3>
-              {attendeeEmail ? (
-                <p className="text-xs text-navy-500 mt-0.5">{attendeeEmail}</p>
-              ) : null}
-            </div>
-
-            <div>
-              <p className="text-xs font-semibold tracking-wider text-navy-400 uppercase">
-                Nomor Tiket
-              </p>
-              <p className="mt-1 inline-block rounded-xl bg-navy-50 px-3 py-1 font-mono text-base font-bold tracking-wider text-navy-950 ring-1 ring-inset ring-navy-200/80">
-                {ticketCode}
-              </p>
-            </div>
-
-            {benefits.length > 0 ? (
-              <div>
-                <p className="text-xs font-semibold tracking-wider text-navy-400 uppercase">
-                  Fasilitas &amp; Kupon Acara
-                </p>
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-sage-100 px-2.5 py-0.5 text-xs font-medium text-sage-700 ring-1 ring-inset ring-sage-300">
-                    <IconCheck className="size-3" />
-                    Presensi Hadir
-                  </span>
-                  {benefits.map((b) => (
-                    <span
-                      key={b.key}
-                      className={cn(
-                        "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset",
-                        b.status === "claimed"
-                          ? "bg-sage-50 text-sage-700 ring-sage-200"
-                          : "bg-gold-50 text-gold-700 ring-gold-200",
-                      )}
-                    >
-                      • {b.name} {b.status === "claimed" ? "(Ditukar)" : ""}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </div>
-
-          {/* Kolom Kode QR */}
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-navy-100 bg-navy-50/70 p-3 sm:p-4">
-            <div className="relative size-40 overflow-hidden rounded-xl bg-white p-1 shadow-sm ring-1 ring-navy-200/80 sm:size-44">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={qrDataUrl}
-                alt={`QR Code Tiket ${ticketCode}`}
-                className="size-full object-contain"
-              />
-            </div>
-            <p className="mt-2 text-center text-[0.7rem] font-medium text-navy-500">
-              Pindai saat tiba di lokasi
-            </p>
+        {/* Kotak Kode QR Putih Bersih di Tengah */}
+        <div className="my-5 flex justify-center">
+          <div className="rounded-xl bg-white p-3 shadow-md sm:p-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={qrDataUrl}
+              alt={`QR Code Tiket ${ticketCode}`}
+              className="size-48 object-contain sm:size-52"
+            />
           </div>
         </div>
+      </div>
 
-        {/* Petunjuk Tiket */}
-        <div className="mt-6 border-t border-navy-100 pt-4">
-          <p className="text-xs leading-relaxed text-navy-500">
-            <strong>Catatan Penting:</strong> Simpan atau unduh tiket ini di ponsel Anda. Tunjukkan QR Code ini kepada panitia saat kedatangan untuk verifikasi kehadiran dan penukaran kupon.
+      {/* 3. Detail Peserta */}
+      <div className="border-t border-zinc-800/80 px-5 py-4 sm:px-6">
+        <h3 className="text-xs font-bold tracking-wider text-zinc-300 uppercase">
+          DETAIL PESERTA
+        </h3>
+        <div className="mt-2.5 space-y-1.5 text-xs">
+          <div className="grid grid-cols-[110px_1fr] sm:grid-cols-[130px_1fr]">
+            <span className="text-zinc-400">Nama:</span>
+            <span className="font-semibold text-white [overflow-wrap:anywhere]">{attendeeName}</span>
+          </div>
+          <div className="grid grid-cols-[110px_1fr] sm:grid-cols-[130px_1fr]">
+            <span className="text-zinc-400">Email:</span>
+            <span className="text-zinc-200 [overflow-wrap:anywhere]">{attendeeEmail || "-"}</span>
+          </div>
+          <div className="grid grid-cols-[110px_1fr] sm:grid-cols-[130px_1fr]">
+            <span className="text-zinc-400">No. WhatsApp:</span>
+            <span className="text-zinc-200">{attendeePhone || "-"}</span>
+          </div>
+          <div className="grid grid-cols-[110px_1fr] sm:grid-cols-[130px_1fr]">
+            <span className="text-zinc-400">Asal:</span>
+            <span className="text-zinc-200">{attendeeOrg || "SMK PLUS PELITA NUSANTARA"}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Detail Tiket */}
+      <div className="border-t border-zinc-800/80 px-5 py-4 sm:px-6">
+        <h3 className="text-xs font-bold tracking-wider text-zinc-300 uppercase">
+          DETAIL TIKET
+        </h3>
+        <div className="mt-2.5 space-y-1.5 text-xs">
+          <div className="grid grid-cols-[110px_1fr] sm:grid-cols-[130px_1fr]">
+            <span className="text-zinc-400">Tiket ID:</span>
+            <span className="font-mono font-bold text-white">{ticketCode}</span>
+          </div>
+          <div className="grid grid-cols-[110px_1fr] sm:grid-cols-[130px_1fr]">
+            <span className="text-zinc-400">Harga:</span>
+            <span className="text-zinc-200">{price || "Gratis"}</span>
+          </div>
+          <div className="grid grid-cols-[110px_1fr] sm:grid-cols-[130px_1fr]">
+            <span className="text-zinc-400">Order ID:</span>
+            <span className="font-mono text-zinc-300">{orderId || ticketCode}</span>
+          </div>
+          <div className="grid grid-cols-[110px_1fr] sm:grid-cols-[130px_1fr] items-center">
+            <span className="text-zinc-400">Status:</span>
+            <div>
+              {checkinStatus === "attended" ? (
+                <span className="inline-block rounded bg-emerald-600 px-2.5 py-0.5 text-[11px] font-semibold text-white">
+                  Sudah Hadir
+                </span>
+              ) : (
+                <span className="inline-block rounded bg-emerald-600 px-2.5 py-0.5 text-[11px] font-semibold text-white">
+                  Sudah Dibayar
+                </span>
+              )}
+            </div>
+          </div>
+          {benefits.length > 0 ? (
+            <div className="grid grid-cols-[110px_1fr] sm:grid-cols-[130px_1fr] pt-1">
+              <span className="text-zinc-400">Fasilitas / Kupon:</span>
+              <div className="flex flex-wrap gap-1.5">
+                {benefits.map((b) => (
+                  <span
+                    key={b.key}
+                    className={cn(
+                      "inline-block rounded px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset",
+                      b.status === "claimed"
+                        ? "bg-zinc-800 text-zinc-400 ring-zinc-700 line-through"
+                        : "bg-emerald-950/70 text-emerald-300 ring-emerald-700/60",
+                    )}
+                  >
+                    {b.name} {b.status === "claimed" ? "(Ditukar)" : ""}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      {/* 5. Lokasi Event */}
+      <div className="border-t border-zinc-800/80 px-5 py-4 sm:px-6">
+        <h3 className="text-xs font-bold tracking-wider text-zinc-300 uppercase">
+          LOKASI EVENT
+        </h3>
+        <div className="mt-2.5 flex items-start gap-2 text-xs text-zinc-200">
+          <IconMapPin className="mt-0.5 size-4 shrink-0 text-zinc-400" />
+          <span className="leading-relaxed">
+            {eventLocation || "SMK Plus Pelita Nusantara, Cibinong, Bogor"}
+          </span>
+        </div>
+      </div>
+
+      {/* 6. Kotak Catatan (Amber / Cokelat) */}
+      <div className="px-5 py-2 sm:px-6">
+        <div className="rounded-lg border border-amber-600/80 bg-[#3a1d06]/75 p-3 text-xs leading-relaxed text-amber-200">
+          <p>
+            <strong className="font-semibold text-amber-100">Catatan:</strong> Peserta wajib menunjukkan e-tiket saat registrasi ulang. Simpan e-tiket dengan cara mengunduh atau melakukan tangkapan layar, dan pastikan QR code terlihat jelas serta dapat dipindai.
           </p>
         </div>
-
-        {aksiTambahan ? <div className="mt-6">{aksiTambahan}</div> : null}
       </div>
+
+      {/* 7. Syarat dan Ketentuan Daftar */}
+      <div className="border-t border-zinc-800/80 px-5 py-4 sm:px-6">
+        <h3 className="text-xs font-bold tracking-wider text-zinc-300 uppercase">
+          SYARAT DAN KETENTUAN DAFTAR
+        </h3>
+        <ol className="mt-2.5 list-decimal space-y-1.5 pl-4 text-xs leading-relaxed text-zinc-300">
+          <li>
+            Acara ini terbuka untuk seluruh peserta terdaftar kegiatan Rohkris SMK Plus Pelita Nusantara.
+          </li>
+          <li>
+            Peserta wajib mendaftar melalui situs resmi Rohkris Pelita Nusantara.
+          </li>
+          <li>
+            Setelah mendaftar, peserta diwajibkan bergabung ke grup komunikasi / WhatsApp panitia untuk mendapatkan informasi lebih lanjut.
+          </li>
+          <li>
+            <span>Link Grup: </span>
+            {whatsappGroupUrl ? (
+              <a
+                href={whatsappGroupUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-emerald-400 underline hover:text-emerald-300"
+              >
+                Join Grup WhatsApp
+              </a>
+            ) : (
+              <span className="font-medium text-emerald-400">
+                Informasi koordinasi dibagikan via grup Rohkris
+              </span>
+            )}
+          </li>
+          <li>
+            Peserta diwajibkan mengikuti akun-akun media sosial resmi Rohkris untuk pembaruan informasi: @rohkrissmkpenus.
+          </li>
+          <li>
+            Peserta diwajibkan mematuhi seluruh arahan dan tata tertib panitia penyelenggara.
+          </li>
+        </ol>
+      </div>
+
+      {/* 8. Peraturan Kegiatan (Do's & Don'ts) */}
+      <div className="border-t border-zinc-800/80 px-5 py-4 sm:px-6">
+        <h3 className="text-xs font-bold tracking-wider text-zinc-300 uppercase">
+          PERATURAN KEGIATAN
+        </h3>
+        <div className="mt-2.5 space-y-3 text-xs leading-relaxed text-zinc-300">
+          <div>
+            <p className="font-semibold text-zinc-200">• Do&apos;s (Hal yang dilakukan)</p>
+            <ol className="mt-1 list-decimal space-y-1 pl-4 text-zinc-400">
+              <li>Menggunakan pakaian rapi dan sopan yang ditentukan oleh panitia.</li>
+              <li>Membuang sampah pada tempat yang telah disediakan.</li>
+              <li>Membawa bukti pendaftaran e-tiket dan kartu identitas / kartu pelajar yang valid.</li>
+              <li>Hadir di lokasi tepat waktu sesuai jadwal acara.</li>
+              <li>Menjaga ketertiban, keamanan, dan kenyamanan seluruh peserta.</li>
+            </ol>
+          </div>
+          <div>
+            <p className="font-semibold text-zinc-200">• Don&apos;ts (Hal yang dihindari)</p>
+            <ol className="mt-1 list-decimal space-y-1 pl-4 text-zinc-400">
+              <li>Dilarang membawa hewan peliharaan.</li>
+              <li>Dilarang membawa senjata tajam atau benda-benda berbahaya lainnya.</li>
+              <li>Dilarang membawa dan mengonsumsi minuman keras atau obat-obatan terlarang.</li>
+              <li>Dilarang merokok atau menggunakan vape di area acara.</li>
+              <li>Dilarang membuang sampah sembarangan.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      {/* 9. Tombol Aksi Tambahan (Unduh / Cetak) */}
+      {aksiTambahan ? (
+        <div className="border-t border-zinc-800/80 bg-zinc-900/60 p-5 sm:p-6">
+          {aksiTambahan}
+        </div>
+      ) : null}
     </div>
   );
 }

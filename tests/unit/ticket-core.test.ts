@@ -9,6 +9,8 @@ import {
   parseBenefitsConfig,
   parseScannedTicketCode,
   resolveAttendeeName,
+  resolveAttendeeOrg,
+  resolveAttendeePhone,
   signTicketCode,
 } from "@/lib/tickets/ticket-code";
 
@@ -114,6 +116,35 @@ describe("Benefits Configuration & Attendee Name Resolution", () => {
       ],
     };
     expect(resolveAttendeeName({ q_id: "12345" }, defTanpaNama)).toBe("12345");
+  });
+
+  it("mendeteksi nomor telepon/WhatsApp dan asal instansi/sekolah", () => {
+    const def: FormDefinition = {
+      schemaVersion: 1,
+      sections: [
+        {
+          id: "sec1",
+          title: "Data Diri",
+          items: [
+            { kind: "short_text", id: "q_wa", title: "Nomor WhatsApp", required: true },
+            { kind: "short_text", id: "q_asal", title: "Asal Sekolah", required: true },
+          ],
+        },
+      ],
+    };
+
+    const answers = {
+      q_wa: "081234567890",
+      q_asal: "SMK Plus Pelita Nusantara",
+    };
+
+    expect(resolveAttendeePhone(answers, def)).toBe("081234567890");
+    expect(resolveAttendeeOrg(answers, def)).toBe("SMK Plus Pelita Nusantara");
+
+    // Fallback jika tidak ada pertanyaan telepon/asal
+    const defKosong: FormDefinition = { schemaVersion: 1, sections: [] };
+    expect(resolveAttendeePhone({}, defKosong)).toBeNull();
+    expect(resolveAttendeeOrg({}, defKosong)).toBe("SMK PLUS PELITA NUSANTARA");
   });
 });
 

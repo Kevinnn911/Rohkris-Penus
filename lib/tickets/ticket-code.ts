@@ -140,3 +140,43 @@ export function resolveAttendeeName(
 
   return "Peserta Rohkris";
 }
+
+/**
+ * Mencari nomor telepon/WhatsApp peserta dari isian jawaban formulir.
+ */
+export function resolveAttendeePhone(
+  answers: StoredAnswers,
+  definition: FormDefinition,
+): string | null {
+  const questions = allQuestions(definition);
+  for (const q of questions) {
+    if (
+      q.kind === "short_text" &&
+      /(wa|whatsapp|telepon|telp|hp|handphone|ponsel)/i.test(q.title)
+    ) {
+      const val = answers[q.id];
+      if (typeof val === "string" && val.trim()) return val.trim();
+    }
+  }
+  return null;
+}
+
+/**
+ * Mencari asal sekolah/instansi/kelas peserta dari isian jawaban formulir.
+ */
+export function resolveAttendeeOrg(
+  answers: StoredAnswers,
+  definition: FormDefinition,
+): string {
+  const questions = allQuestions(definition);
+  for (const q of questions) {
+    if (
+      (q.kind === "short_text" || q.kind === "multiple_choice" || q.kind === "dropdown") &&
+      /(asal|sekolah|instansi|institusi|lembaga|kelas|jurusan)/i.test(q.title)
+    ) {
+      const val = answers[q.id];
+      if (typeof val === "string" && val.trim()) return val.trim();
+    }
+  }
+  return "SMK PLUS PELITA NUSANTARA";
+}

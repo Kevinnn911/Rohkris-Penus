@@ -100,21 +100,25 @@ export function buildConfirmationEmail(input: ConfirmationEmailInput): { subject
     .join("");
 
   const tiketHtml = input.ticket
-    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0 24px;background:#f9f9fb;border:2px dashed #dedee2;border-radius:16px;padding:20px">` +
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;background:#18181b;border:1px solid #27272a;border-radius:16px;padding:24px;color:#ffffff">` +
       `<tr><td align="center">` +
-      `<div style="font-size:11px;font-weight:bold;letter-spacing:1px;color:#75680a;text-transform:uppercase;margin-bottom:4px">E-TIKET KEGIATAN</div>` +
-      `<div style="font-size:18px;font-weight:bold;color:#0d0d0f;margin-bottom:6px">${escapeHtml(input.ticket.attendeeName)}</div>` +
-      `<div style="font-family:monospace;font-size:16px;font-weight:bold;background:#0d0d0f;color:#f6f06a;display:inline-block;padding:6px 16px;border-radius:8px;letter-spacing:1.5px;margin-bottom:16px">${escapeHtml(input.ticket.ticketCode)}</div>` +
+      `<div style="font-size:11px;font-weight:bold;letter-spacing:1.5px;color:#f6f06a;text-transform:uppercase;margin-bottom:6px">E-TIKET RESMI</div>` +
+      `<div style="font-size:18px;font-weight:bold;color:#ffffff;margin-bottom:4px">${escapeHtml(input.eventTitle)}</div>` +
+      (input.eventDate ? `<div style="font-size:12px;color:#a1a1aa;margin-bottom:16px">${escapeHtml(input.eventDate)}</div>` : `<div style="margin-bottom:16px"></div>`) +
       (input.ticket.qrCid
-        ? `<div style="margin:8px 0 14px"><img src="cid:${escapeHtml(input.ticket.qrCid)}" width="180" height="180" alt="QR Code Tiket" style="display:block;margin:0 auto;border-radius:8px;background:#ffffff;padding:8px;border:1px solid #dedee2" /></div>`
+        ? `<div style="background:#ffffff;border-radius:12px;padding:12px;display:inline-block;margin-bottom:16px"><img src="cid:${escapeHtml(input.ticket.qrCid)}" width="180" height="180" alt="QR Code Tiket" style="display:block;margin:0 auto" /></div>`
         : "") +
-      `<div style="font-size:12px;color:#55555d;margin-bottom:10px">Tunjukkan QR code ini ke panitia untuk presensi dan penukaran kupon.</div>` +
+      `<table role="presentation" width="100%" cellpadding="4" cellspacing="0" style="text-align:left;font-size:12px;margin:12px 0 16px;border-top:1px solid #27272a;padding-top:12px">` +
+      `<tr><td style="color:#a1a1aa;width:90px">Nama:</td><td style="color:#ffffff;font-weight:bold">${escapeHtml(input.ticket.attendeeName)}</td></tr>` +
+      `<tr><td style="color:#a1a1aa">Tiket ID:</td><td style="color:#ffffff;font-family:monospace;font-weight:bold">${escapeHtml(input.ticket.ticketCode)}</td></tr>` +
+      `<tr><td style="color:#a1a1aa">Status:</td><td><span style="background:#059669;color:#ffffff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold">Sudah Dibayar</span></td></tr>` +
       (input.ticket.benefits.length > 0
-        ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid #dedee2">` +
-          `<div style="font-size:12px;font-weight:bold;color:#27272c;margin-bottom:6px">Kupon yang Anda dapatkan:</div>` +
-          `<div style="font-size:13px;color:#05603a">${input.ticket.benefits.map((b) => `• ${escapeHtml(b.name)}`).join("&nbsp;&nbsp;")}</div>` +
-          `</div>`
+        ? `<tr><td style="color:#a1a1aa">Kupon:</td><td style="color:#34d399">${input.ticket.benefits.map((b) => escapeHtml(b.name)).join(" &bull; ")}</td></tr>`
         : "") +
+      `</table>` +
+      `<div style="background:#3a1d06;border:1px solid #b45309;border-radius:8px;padding:10px 12px;text-align:left;font-size:11px;color:#fef08a;line-height:1.4">` +
+      `<strong>Catatan:</strong> Peserta wajib menunjukkan e-tiket ini saat registrasi ulang di lokasi. Simpan atau tangkap layar gambar QR code di atas.` +
+      `</div>` +
       `</td></tr></table>`
     : "";
 

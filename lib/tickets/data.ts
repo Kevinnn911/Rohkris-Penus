@@ -12,9 +12,17 @@ import {
   generateTicketCode,
   parseBenefitsConfig,
   resolveAttendeeName,
+  resolveAttendeeOrg,
+  resolveAttendeePhone,
 } from "@/lib/tickets/ticket-code";
 
-export { DEFAULT_TICKET_BENEFITS, parseBenefitsConfig, resolveAttendeeName };
+export {
+  DEFAULT_TICKET_BENEFITS,
+  parseBenefitsConfig,
+  resolveAttendeeName,
+  resolveAttendeeOrg,
+  resolveAttendeePhone,
+};
 
 /**
  * Menerbitkan data tiket & baris benefit di dalam transaksi MySQL pendaftaran.

@@ -447,18 +447,33 @@ function LayarSelesai({
           <KartuETiket
             ticketCode={ticket.ticketCode}
             attendeeName={ticket.attendeeName}
+            attendeeEmail={ticket.attendeeEmail}
+            attendeePhone={ticket.attendeePhone}
+            attendeeOrg={ticket.attendeeOrg}
             eventTitle={ticket.eventTitle}
+            eventSummary={ticket.eventSummary}
             eventDate={ticket.eventDate}
             eventLocation={ticket.eventLocation}
+            bannerUrl={ticket.bannerUrl}
+            price={ticket.price}
+            orderId={ticket.orderId}
             qrDataUrl={ticket.qrDataUrl}
             benefits={ticket.benefits}
+            whatsappGroupUrl={ticket.whatsappGroupUrl}
             aksiTambahan={
               <AksiUnduhTiket
                 ticketCode={ticket.ticketCode}
                 attendeeName={ticket.attendeeName}
+                attendeeEmail={ticket.attendeeEmail}
+                attendeePhone={ticket.attendeePhone}
+                attendeeOrg={ticket.attendeeOrg}
                 eventTitle={ticket.eventTitle}
+                eventSummary={ticket.eventSummary}
                 eventDate={ticket.eventDate}
                 eventLocation={ticket.eventLocation}
+                bannerUrl={ticket.bannerUrl}
+                price={ticket.price}
+                orderId={ticket.orderId}
                 qrDataUrl={ticket.qrDataUrl}
                 benefits={ticket.benefits}
               />

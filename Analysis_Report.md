@@ -534,3 +534,34 @@
 * **Impact:**
   - Panitia memiliki sistem registrasi dan presensi acara modern yang lengkap dari hulu ke hilir.
   - Meminimalkan antrean di lokasi acara, mencegah kecurangan penukaran kupon konsumsi/souvenir, dan menyediakan cadangan data aman di server bila peserta kehilangan tiket fisiknya.
+
+## [DONE] Redesain Layout E-Tiket Digital Format Gelap Profesional (Anti-AI Slop)
+
+* **Status:** Selesai (Production Ready)
+* **Feature:** Perombakan total tata letak kartu e-tiket digital dan berkas unduhannya mengadopsi format gelap (dark mode) presisi sesuai referensi acara riil tanpa elemen dekoratif berlebih (bebas AI slop).
+* **Technical Implementation:**
+  1. **Komponen Kartu Web (`components/tiket/KartuETiket.tsx`):**
+     - Mengubah tema kartu menjadi latar gelap pekat (`bg-[#18181b] border-zinc-800 text-white shadow-2xl`).
+     - Menyematkan banner poster rasio landscape (`aspect-[21/9] sm:aspect-[16/6]`) di bagian atas kartu.
+     - Menyusun header terpusat dengan teks judul acara tebal, subjudul tema, waktu acara, serta kotak putih bersih (`bg-white rounded-xl shadow-md p-3 sm:p-4`) untuk memuat kode QR berkontras tinggi di posisi tengah atas.
+     - Mengimplementasikan seksi tabular 2 kolom terstruktur rapi:
+       - **DETAIL PESERTA:** Nama, Email, No. WhatsApp, Asal Instansi/Sekolah.
+       - **DETAIL TIKET:** Tiket ID alfanumerik monospace, Harga tiket, Order ID unik, Status pendaftaran berbadge hijau (`Sudah Dibayar` / `Sudah Hadir`), serta fasilitas/kupon acara.
+       - **LOKASI EVENT:** Ikon penanda lokasi dan alamat lengkap venue acara.
+     - Menyematkan kotak imbauan berlatar cokelat/amber (`bg-[#3a1d06]/75 border-amber-600/80 text-amber-200`) untuk instruksi registrasi ulang dan pemindaian QR.
+     - Menambahkan seksi teks regulasi resmi terstruktur:
+       - **SYARAT DAN KETENTUAN DAFTAR:** Daftar berurutan 1 sampai 6 lengkap dengan tautan dinamis bergabung grup koordinasi WhatsApp.
+       - **PERATURAN KEGIATAN:** Pembagian tegas tata tertib Do's (hal yang dilakukan) dan Don'ts (hal yang dihindari).
+  2. **Ekspor Gambar PNG Kanvas Klien (`components/tiket/AksiUnduhTiket.tsx`):**
+     - Menulis ulang modul render HTML5 Canvas (1200 x 2480 px) agar menghasilkan gambar berkas PNG dengan tipografi tajam, latar gelap pekat, kotak QR putih, badge status hijau, kotak amber, serta syarat dan peraturan lengkap yang 100% identik dengan tampilan kartu di layar.
+  3. **Ekstraksi Data Peserta Otomatis (`lib/tickets/ticket-code.ts` & `lib/actions/formulir-publik.ts`):**
+     - Menambahkan fungsi pembantu cerdas `resolveAttendeePhone` dan `resolveAttendeeOrg` untuk mendeteksi nomor WhatsApp dan asal sekolah/instansi secara otomatis dari jawaban isian formulir.
+  4. **Pembaruan Desain Surel (`lib/forms/email-template.ts`):**
+     - Menyelaraskan kartu e-tiket pada badan surel peserta dengan gaya kartu gelap, kode QR CID tersemat di tengah, tabel detail peserta, dan kotak imbauan amber.
+  5. **Verifikasi Kualitas:**
+     - Menambahkan pengujian unit baru pada `tests/unit/ticket-core.test.ts`. Seluruh 120 pengujian pada 9 test suite lulus 100% via `npm test`.
+     - Validasi TypeScript `tsc --noEmit` lolos dengan 0 error.
+     - Validasi ESLint `eslint .` lolos dengan 0 error dan 0 warning.
+* **Impact:**
+  - Desain e-tiket kini tampak sangat profesional, bersih, berwibawa, dan otentik layaknya e-tiket konferensi/pelatihan resmi skala nasional, bebas dari kesan desain generik kecerdasan buatan (*AI slop*).
+  - Peserta mendapatkan seluruh informasi esensial (jadwal, lokasi, syarat, peraturan, grup WhatsApp) langsung di dalam satu lembar e-tiket baik di web, gambar unduhan, maupun surel.
