@@ -542,7 +542,7 @@
 * **Technical Implementation:**
   1. **Komponen Kartu Web (`components/tiket/KartuETiket.tsx`):**
      - Mengubah tema kartu menjadi latar gelap pekat (`bg-[#18181b] border-zinc-800 text-white shadow-2xl`).
-     - Menyematkan banner poster rasio landscape (`aspect-[21/9] sm:aspect-[16/6]`) di bagian atas kartu.
+     - Menyematkan banner poster rasio landscape (`aspect-[21/9] sm:aspect-[16/6]`) di bagian atas kartu yang secara otomatis menggunakan foto gedung sekolah `/gedung-sekolah.jpg` (`object-cover object-[center_38%]`) seperti pada hero beranda, dilengkapi gradasi halus bawah (`from-[#18181b] via-[#18181b]/40 to-transparent`) agar menyatu mulus ke badan tiket.
      - Menyusun header terpusat dengan teks judul acara tebal, subjudul tema, waktu acara, serta kotak putih bersih (`bg-white rounded-xl shadow-md p-3 sm:p-4`) untuk memuat kode QR berkontras tinggi di posisi tengah atas.
      - Mengimplementasikan seksi tabular 2 kolom terstruktur rapi:
        - **DETAIL PESERTA:** Nama, Email, No. WhatsApp, Asal Instansi/Sekolah.

@@ -65,23 +65,40 @@ export function AksiUnduhTiket({
       ctx.fillStyle = "#18181b";
       ctx.fillRect(0, 0, width, height);
 
-      // 2. Banner Atas
+      // 2. Banner Atas (Foto Gedung SMK Plus Pelita Nusantara / Poster Kegiatan)
       const yOffset = 260;
+      const targetBanner = bannerUrl || "/gedung-sekolah.jpg";
       let bannerLoaded = false;
-      if (bannerUrl) {
-        try {
-          const bannerImg = new window.Image();
-          bannerImg.crossOrigin = "anonymous";
-          await new Promise<void>((resolve, reject) => {
-            bannerImg.onload = () => resolve();
-            bannerImg.onerror = reject;
-            bannerImg.src = bannerUrl;
-          });
-          ctx.drawImage(bannerImg, 0, 0, width, 260);
-          bannerLoaded = true;
-        } catch {
-          bannerLoaded = false;
-        }
+      try {
+        const bannerImg = new window.Image();
+        bannerImg.crossOrigin = "anonymous";
+        await new Promise<void>((resolve, reject) => {
+          bannerImg.onload = () => resolve();
+          bannerImg.onerror = reject;
+          bannerImg.src = targetBanner;
+        });
+
+        // Proporsi object-cover dengan fokus vertikal 38% (object-[center_38%])
+        const imgW = bannerImg.naturalWidth || bannerImg.width;
+        const imgH = bannerImg.naturalHeight || bannerImg.height;
+        const scale = Math.max(width / imgW, yOffset / imgH);
+        const sW = width / scale;
+        const sH = yOffset / scale;
+        const sX = (imgW - sW) / 2;
+        const sY = (imgH - sH) * 0.38;
+
+        ctx.drawImage(bannerImg, sX, sY, sW, sH, 0, 0, width, yOffset);
+
+        // Gradasi halus di bagian bawah banner agar menyatu mulus ke latar gelap #18181b
+        const grad = ctx.createLinearGradient(0, yOffset * 0.6, 0, yOffset);
+        grad.addColorStop(0, "rgba(24, 24, 27, 0)");
+        grad.addColorStop(1, "#18181b");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, yOffset * 0.6, width, yOffset * 0.4);
+
+        bannerLoaded = true;
+      } catch {
+        bannerLoaded = false;
       }
 
       if (!bannerLoaded) {

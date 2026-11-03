@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 
-import { IconMapPin, IconTicket } from "@/components/ui/Icons";
+import { IconMapPin } from "@/components/ui/Icons";
 import { cn } from "@/lib/cn";
 
 export type KartuETiketProps = {
@@ -46,39 +46,27 @@ export function KartuETiket({
   aksiTambahan,
   id = "e-tiket-card",
 }: KartuETiketProps) {
+  const headerBannerSrc = bannerUrl || "/gedung-sekolah.jpg";
+
   return (
     <div
       id={id}
       className="mx-auto w-full max-w-lg overflow-hidden rounded-2xl border border-zinc-800 bg-[#18181b] text-white shadow-2xl transition-all"
     >
-      {/* 1. Banner Atas (Header Poster) */}
+      {/* 1. Banner Atas (Foto Gedung SMK Plus Pelita Nusantara / Poster Kegiatan) */}
       <div className="relative aspect-[21/9] w-full overflow-hidden bg-zinc-900 sm:aspect-[16/6]">
-        {bannerUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={bannerUrl}
-            alt={eventTitle}
-            className="size-full object-cover"
-          />
-        ) : (
-          <div className="relative flex size-full items-center justify-between overflow-hidden bg-gradient-to-r from-navy-950 via-zinc-900 to-navy-900 px-6 py-4">
-            <div className="relative z-10">
-              <span className="inline-block text-[10px] font-bold tracking-widest text-gold-300 uppercase">
-                SMK PLUS PELITA NUSANTARA
-              </span>
-              <p className="mt-0.5 text-sm font-bold tracking-heading text-white sm:text-base">
-                ROHANI KRISTEN (ROHKRIS)
-              </p>
-            </div>
-            <div className="relative z-10 flex size-12 shrink-0 items-center justify-center rounded-xl bg-white/10 text-gold-300 ring-1 ring-white/15">
-              <IconTicket className="size-6" />
-            </div>
-          </div>
-        )}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={headerBannerSrc}
+          alt={eventTitle}
+          className="size-full object-cover object-[center_38%] select-none"
+        />
+        {/* Gradasi halus di bagian bawah agar foto menyatu mulus dengan latar kartu */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-[#18181b] via-[#18181b]/40 to-transparent" />
       </div>
 
       {/* 2. Judul Acara, Subjudul, Tanggal & Kode QR Terpusat */}
-      <div className="px-5 pt-5 pb-2 text-center sm:px-6">
+      <div className="px-5 pt-4 pb-2 text-center sm:px-6">
         <h2 className="text-base font-bold leading-snug tracking-heading text-white sm:text-lg [overflow-wrap:anywhere]">
           {eventTitle}
         </h2>
