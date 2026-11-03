@@ -1,3 +1,5 @@
+// File: components/site/PageHeader.tsx
+
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -6,7 +8,7 @@ import { IconArrowRight } from "@/components/ui/Icons";
 import { cn } from "@/lib/cn";
 
 /**
- * Header halaman publik — kartu hero terang membulat (gaya referensi),
+ * Header halaman publik — membentang penuh hingga sudut atas dan samping,
  * dengan breadcrumb opsional (PRD §9: breadcrumb pada detail).
  */
 export function PageHeader({
@@ -27,10 +29,10 @@ export function PageHeader({
   className?: string;
 }) {
   return (
-    <div className={cn("px-3 sm:px-5", className)}>
-      <section className="relative isolate mx-auto max-w-7xl overflow-hidden rounded-hero bg-mist">
+    <div className={cn("-mt-[5.25rem] sm:-mt-24", className)}>
+      <section className="relative isolate w-full overflow-hidden bg-ivory-100">
         <HeroBackdrop variant="subtle" />
-        <div className="relative mx-auto max-w-6xl px-5 pb-14 pt-10 text-center sm:px-8 sm:pb-20 sm:pt-14">
+        <div className="relative mx-auto max-w-6xl px-5 pb-20 pt-28 text-center sm:px-8 sm:pb-24 sm:pt-36">
           {breadcrumb && breadcrumb.length > 0 ? (
             <nav aria-label="Breadcrumb" className="mb-8 flex justify-center">
               <ol className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-full bg-white px-4 py-1.5 text-sm text-navy-600 ring-1 ring-inset ring-navy-200/80">

@@ -1,3 +1,5 @@
+// File: lib/actions/formulir-admin.ts
+
 "use server";
 
 import { createHash } from "node:crypto";
@@ -86,6 +88,10 @@ export async function simpanFormulir(eventId: string, input: SimpanFormulirInput
         send_confirmation: s.sendConfirmation ? 1 : 0,
         confirmation_message: s.confirmationMessage,
         consent_text: s.consentText,
+        ticket_enabled: s.ticketEnabled ? 1 : 0,
+        ticket_name_question_id: s.ticketNameQuestionId ?? null,
+        ticket_redemption_mode: s.ticketRedemptionMode ?? "flexible",
+        ticket_benefits_config: s.ticketBenefitsConfig ? JSON.stringify(s.ticketBenefitsConfig) : null,
       };
 
       if (!lama) {
@@ -97,12 +103,14 @@ export async function simpanFormulir(eventId: string, input: SimpanFormulirInput
           `INSERT INTO event_forms
              (id, event_id, definition, definition_hash, version, revision, question_count, quota,
               collect_email, limit_one_per_email, allow_edit, send_confirmation, confirmation_message,
-              consent_text, created_by, updated_by)
-           VALUES (?, ?, ?, ?, 1, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              consent_text, ticket_enabled, ticket_name_question_id, ticket_redemption_mode,
+              ticket_benefits_config, created_by, updated_by)
+           VALUES (?, ?, ?, ?, 1, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             formId, eventId, json, hash, kolom.question_count, kolom.quota, kolom.collect_email,
             kolom.limit_one_per_email, kolom.allow_edit, kolom.send_confirmation, kolom.confirmation_message,
-            kolom.consent_text, adminId, adminId,
+            kolom.consent_text, kolom.ticket_enabled, kolom.ticket_name_question_id, kolom.ticket_redemption_mode,
+            kolom.ticket_benefits_config, adminId, adminId,
           ],
         );
         await tx.execute(
@@ -145,12 +153,15 @@ export async function simpanFormulir(eventId: string, input: SimpanFormulirInput
       await tx.execute(
         `UPDATE event_forms SET definition = ?, definition_hash = ?, version = ?, revision = ?,
             question_count = ?, quota = ?, collect_email = ?, limit_one_per_email = ?, allow_edit = ?,
-            send_confirmation = ?, confirmation_message = ?, consent_text = ?, updated_by = ?
+            send_confirmation = ?, confirmation_message = ?, consent_text = ?,
+            ticket_enabled = ?, ticket_name_question_id = ?, ticket_redemption_mode = ?,
+            ticket_benefits_config = ?, updated_by = ?
           WHERE id = ?`,
         [
           json, hash, versi, revisi, kolom.question_count, kolom.quota, kolom.collect_email,
           kolom.limit_one_per_email, kolom.allow_edit, kolom.send_confirmation, kolom.confirmation_message,
-          kolom.consent_text, adminId, lama.id,
+          kolom.consent_text, kolom.ticket_enabled, kolom.ticket_name_question_id, kolom.ticket_redemption_mode,
+          kolom.ticket_benefits_config, adminId, lama.id,
         ],
       );
       if (berubah) {

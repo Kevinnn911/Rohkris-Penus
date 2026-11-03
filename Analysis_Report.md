@@ -449,3 +449,88 @@
   6. Memverifikasi berkas sensitif (`.env.local`, `kredensial_hosting.txt`, `node_modules/`, `storage/`) tetap terisolasi dan diabaikan oleh `.gitignore` untuk mencegah kebocoran data kredensial.
 * **Impact:**
   - Aplikasi dinyatakan siap 100% untuk diunggah dan diaktifkan di server hosting cPanel `rohkrissmkpenus.web.id` tanpa potensi kegagalan kompilasi atau dependensi path.
+
+
+## [DONE] Penggantian Latar Belakang Hero (HeroBackdrop) dengan Foto Gedung SMK Plus Pelita Nusantara Full-Bleed & Seamless Bottom Blend
+
+* **Status:** Selesai (Production Ready)
+* **Feature:** Penggantian siluet SVG kapel/rumah bawaan pada `components/site/HeroBackdrop.tsx` dengan foto gedung resmi SMK Plus Pelita Nusantara (`public/gedung-sekolah.jpg`) yang membentang penuh (*full-bleed*) hingga ke sudut layar serta gradasi bawah yang menyatu (*blend*) mulus dengan latar halaman
+* **Technical Implementation:**
+  1. Menyalin aset foto gedung resmi SMK Plus Pelita Nusantara ke direktori publik `public/gedung-sekolah.jpg`.
+  2. Memperbarui `app/(public)/page.tsx` dan `components/site/PageHeader.tsx`:
+     - Menghapus pembatas lebar (`max-w-7xl`), padding samping (`px-3 sm:px-5`), dan sudut membulat (`rounded-hero`) pada pembungkus hero sehingga gambar membentang penuh (`w-full`) hingga ke pojok kiri, kanan, dan atas layar tanpa menyisakan ruang putih di tepi.
+     - Menaikkan posisi bar pencarian (`Kategori`, `Status`, `Jadwal`) pada `app/(public)/page.tsx` menggunakan `-mt-28 sm:-mt-32` (sebelumnya `-mt-24 sm:-mt-20`) agar lebih dekat secara proporsional ke tombol aksi hero dan berada pas di area transisi gradasi bawah.
+  3. Memperbarui komponen `components/site/HeroBackdrop.tsx`:
+     - Mengganti elemen `<svg>` siluet 2 bangunan/gereja dengan komponen `<Image>` (`src="/gedung-sekolah.jpg"`, `fill`, `unoptimized`, `object-cover object-[center_44%]`).
+     - Mengatur opasitas gambar menjadi `opacity-95` pada varian `full` dan `opacity-80` pada varian `subtle` tanpa blur agar fasad gedung terlihat tajam.
+     - Menambahkan gradasi berlapis di bagian bawah (`h-[45%] bg-gradient-to-t from-ivory-100 from-10% via-ivory-100/80 via-48% to-transparent`) yang melebur mulus ke warna latar halaman (`--color-ivory-100`) sehingga bagian bawah foto menyambung tanpa garis batas dengan halaman di bawahnya.
+  4. Memverifikasi validitas kode menggunakan `npm run typecheck`, `npm run lint`, dan `npm test`.
+* **Impact:**
+  - Latar belakang hero kini tampil penuh memenuhi layar hingga ke sudut-sudut atas dan samping, serta bagian bawah gambar menyatu secara alami dengan latar putih/ivory halaman dan bar pencarian.
+
+
+## [DONE] Perbaikan Konflik Controlled vs Uncontrolled Input pada Komponen TextField Admin
+
+* **Status:** Selesai (Production Ready)
+* **Feature:** Eliminasi galat konsol React 19 (`both value and defaultValue props`) pada halaman pembuatan/pengeditan kegiatan dan berita di Panel Admin
+* **Technical Implementation:**
+  1. Memperbarui komponen `TextField` pada `components/admin/Fields.tsx` dengan mendeteksi keberadaan `rest.value !== undefined` (`const terkontrol = rest.value !== undefined`).
+  2. Menyetel `defaultValue={terkontrol ? undefined : (defaultValue ?? "")}` sehingga `<input>` tidak pernah menerima `value` dan `defaultValue` secara bersamaan.
+  3. Memverifikasi kode dengan `npm run typecheck` dan `npm run lint`.
+* **Impact:**
+  - Halaman `/admin/kegiatan/baru`, `/admin/kegiatan/[id]`, `/admin/berita/baru`, dan `/admin/berita/[id]` bebas dari peringatan/galat konsol React terkait komponen input terkontrol.
+
+
+## [DONE] Penambahan Pintasan Langsung & Panduan Kontekstual Pengaturan Formulir Internal pada FormEvent
+
+* **Status:** Selesai (Production Ready)
+* **Feature:** Kotak panduan kontekstual dan tombol pintasan langsung (`Atur Pertanyaan Formulir` & `Lihat Respons`) saat opsi `Formulir internal` dipilih pada `components/admin/FormEvent.tsx`
+* **Technical Implementation:**
+  1. Memperbarui `components/admin/FormEvent.tsx` untuk merender panel bantu kontekstual tepat di bawah pilihan radio `Formulir internal`.
+  2. Pada mode edit kegiatan (`event` tersedia), menampilkan tombol aksi langsung menuju `/admin/kegiatan/[id]/formulir` (`Atur Pertanyaan Formulir`) dan `/admin/kegiatan/[id]/respons` (`Lihat Respons`).
+  3. Pada mode buat kegiatan baru (`!event`), menampilkan instruksi langkah demi langkah agar admin menyimpan kegiatan terlebih dahulu sebelum menyusun pertanyaan formulir.
+* **Impact:**
+  - Admin dapat langsung mengakses halaman pembuat pertanyaan formulir internal dari dalam bagian Pendaftaran tanpa perlu mencari tab navigasi di bagian atas halaman.
+
+
+## [DONE] Implementasi Sistem E-Tiket Digital & Kode QR Multi-Fungsi (Presensi dan Penukaran Kupon)
+
+* **Status:** Selesai (Production Ready)
+* **Feature:** Sistem penerbitan E-Tiket otomatis dengan Kode QR multi-fungsi untuk presensi (check-in) dan penukaran kupon (konsumsi, souvenir, photobooth), dilengkapi pengiriman email QR otomatis, unduh gambar PNG/cetak PDF klien, antarmuka pemindai panitia berbasis kamera & barcode scanner gun, pencegahan scan ganda (*anti-double-claim*), serta server backup tiket untuk mengantisipasi tiket hilang pada gawai peserta.
+* **Technical Implementation:**
+  1. **Skema Database & Migrasi:**
+     - Membuat berkas migrasi `database/migrations/2026-11-e-tiket-qr.sql` dan memperbarui `database/schema.sql`.
+     - Menambahkan kolom konfigurasi tiket pada tabel `event_forms`: `ticket_enabled`, `ticket_name_question_id`, `ticket_redemption_mode`, `ticket_benefits_config`.
+     - Membuat tabel `event_tickets` (`id`, `response_id`, `event_id`, `ticket_code`, `attendee_name`, `attendee_email`, `checkin_status`, `checkin_at`, `checked_in_by`) dengan indeks unik pada `ticket_code`.
+     - Membuat tabel `ticket_benefits` (`id`, `ticket_id`, `benefit_key`, `benefit_name`, `status`, `claimed_at`, `claimed_by`) dengan constraint `ticket_id + benefit_key` unik.
+  2. **Core Logic & Keamanan Kode QR (`lib/tickets/`):**
+     - `ticket-code.ts`: Pembuatan kode tiket ramah manusia dengan format `ROH-<SLUG>-<6_CHARS>` menggunakan karakter non-ambigu, pembuatan HMAC SHA-256 signature rahasia, serta parser fleksibel yang mendukung format payload QR resmi `ROHKRIS:TICKET:<code>:<sig>`, format URL, maupun barcode mentah.
+     - `qr.ts`: Generator QR Code menggunakan pustaka `qrcode` ke format Data URL (PNG Base64) dan SVG dengan tingkat koreksi galat tinggi (`errorCorrectionLevel: 'H'`).
+     - `data.ts`: Penerbitan tiket di dalam transaksi pendaftaran formulir publik (`issueTicketInTx`), query tiket tunggal/kolektif, logika presensi atomik (`claimCheckin`), penukaran kupon per-stan (`claimBenefit`), dan penukaran sekaligus (`claimAll`).
+  3. **Integrasi Email Pengiriman Tiket:**
+     - Menambahkan dukungan lampiran berkas biner (`Buffer`) dan *Content-ID* (CID inline image) pada pengirim surel `lib/email/mailer.ts`.
+     - Memperbarui template konfirmasi surel `lib/forms/email-template.ts` agar menyematkan kartu E-Tiket dengan gambar QR code otomatis yang langsung tampil di aplikasi surel peserta tanpa perlu membuka lampiran terpisah.
+  4. **Antarmuka Pengguna & Unduh Klien:**
+     - `components/tiket/KartuETiket.tsx`: Desain boarding pass modern bergaya kartu resmi dengan aksen emas (`gold-300`), garis potong/perforasi tiket, nama peserta, kode tiket, daftar chip kupon/fasilitas, dan kode QR.
+     - `components/tiket/AksiUnduhTiket.tsx`: Generator gambar PNG beresolusi tinggi (1200x1500) berbasis HTML5 Canvas API murni tanpa ketergantungan paket berat, serta fungsi cetak/simpan PDF langsung.
+     - Menyematkan kartu E-Tiket pada layar sukses pendaftaran (`LayarSelesai` di `components/formulir/FormulirPublik.tsx`).
+  5. **Manajemen Tiket & Server Backup Panel Admin:**
+     - Membuat rute halaman `/admin/kegiatan/[id]/tiket` dan komponen client `components/admin/tiket/ManajemenTiket.tsx`.
+     - Menyediakan pencarian cepat (kode tiket, nama, email), filter status kehadiran, ringkasan statistik (total tiket, hadir, belum hadir, kupon ditukar).
+     - Menyediakan modal "Tiket Cadangan Server" yang merender ulang kartu tiket lengkap dan kode QR untuk peserta yang kehilangan tiket di lokasi, lengkap dengan tombol cetak/unduh dan kirim ulang email.
+  6. **Antarmuka Pemindai QR Panitia (Scanner):**
+     - Membuat rute halaman `/admin/kegiatan/[id]/scan` dan komponen client `components/admin/tiket/PindaiTiket.tsx`.
+     - Mendukung kamera langsung dengan auto-deteksi QR via Web `BarcodeDetector` API, tombol balik kamera depan/belakang, input manual kode tiket, serta kompatibilitas penuh dengan USB Gun Barcode Scanner.
+     - Umpan balik suara interaktif tanpa aset audio eksternal menggunakan Web Audio API sintesis nada (*high pleasant chime* untuk tiket valid, *warning buzz* untuk tiket yang sudah pernah check-in, dan *error tone* untuk tiket tidak valid).
+     - Tombol konfirmasi presensi dan penukaran kupon bertahap maupun serentak dengan pencegahan klaim ganda (*anti-double-claim*).
+     - Riwayat pindaian sesi panitia terkini (*real-time history list*).
+  7. **Konfigurasi Tab & Form Builder:**
+     - Memperbarui `components/admin/SubNavKegiatan.tsx` dengan menambahkan tab navigasi `Tiket` dan `Pindai QR`.
+     - Memperbarui `components/admin/formulir/PembangunFormulir.tsx` dengan bagian pengaturan E-Tiket: saklar terbitkan tiket, selektor pertanyaan penentu nama peserta, pilihan mode penukaran (*fleksibel* vs *all-in-one*), dan pengelola daftar kupon dinamis.
+  8. **Verifikasi Kualitas:**
+     - Membuat 7 unit test baru di `tests/unit/ticket-core.test.ts`. Seluruh 119 pengujian pada 9 test suite lulus 100% via `npm test`.
+     - Verifikasi TypeScript strict mode `npm run typecheck` lolos dengan zero errors.
+     - Verifikasi linting ESLint `npm run lint` lolos dengan zero warnings.
+* **Impact:**
+  - Panitia memiliki sistem registrasi dan presensi acara modern yang lengkap dari hulu ke hilir.
+  - Meminimalkan antrean di lokasi acara, mencegah kecurangan penukaran kupon konsumsi/souvenir, dan menyediakan cadangan data aman di server bila peserta kehilangan tiket fisiknya.

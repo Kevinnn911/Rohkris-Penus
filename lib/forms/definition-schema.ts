@@ -1,3 +1,5 @@
+// File: lib/forms/definition-schema.ts
+
 /**
  * Validasi dokumen definisi formulir (zod v4).
  *
@@ -6,7 +8,7 @@
  *  - semua id unik di seluruh dokumen
  *  - target lompat menunjuk bagian yang ADA dan SESUDAH bagian asal, atau "submit"
  *  - maksimal satu pertanyaan bercabang per bagian (pilihan ganda / dropdown)
- *  - label opsi unik per pertanyaan; min ≤ maks
+ *  - label opsi unik per pertanyaan; min <= maks
  */
 
 import { z } from "zod";
@@ -311,7 +313,7 @@ export function unreachableSections(def: FormDefinition): string[] {
     if (cabang && (cabang.kind === "multiple_choice" || cabang.kind === "dropdown")) {
       for (const o of cabang.options) tujuan.add(o.goTo ?? bawaan);
       if (cabang.kind === "multiple_choice" && cabang.other) tujuan.add(cabang.otherGoTo ?? bawaan);
-      // Pertanyaan bercabang yang tidak wajib bisa dilewati → tujuan bawaan juga mungkin.
+      // Pertanyaan bercabang yang tidak wajib bisa dilewati => tujuan bawaan juga mungkin.
       if (!cabang.required) tujuan.add(bawaan);
     } else {
       tujuan.add(bawaan);
@@ -355,6 +357,17 @@ export const formSettingsSchema = z
       .max(FORM_LIMITS.consentTextMax, { error: `Teks persetujuan maksimal ${FORM_LIMITS.consentTextMax} karakter.` })
       .nullable()
       .transform((value) => (value ? value : null)),
+    ticketEnabled: z.boolean().default(true),
+    ticketNameQuestionId: z.string().trim().nullable().default(null),
+    ticketRedemptionMode: z.enum(["flexible", "all_in_one"]).default("flexible"),
+    ticketBenefitsConfig: z
+      .array(
+        z.object({
+          key: z.string().trim().min(1, { error: "Kunci kupon wajib diisi." }),
+          name: z.string().trim().min(1, { error: "Nama kupon wajib diisi." }),
+        }),
+      )
+      .default([{ key: "konsumsi", name: "Kupon Konsumsi" }]),
   })
   .superRefine((s, ctx) => {
     if (s.limitOnePerEmail && !s.collectEmail) {
@@ -384,4 +397,8 @@ export const DEFAULT_FORM_SETTINGS: FormSettings = {
   sendConfirmation: false,
   confirmationMessage: null,
   consentText: DEFAULT_CONSENT_TEXT,
+  ticketEnabled: true,
+  ticketNameQuestionId: null,
+  ticketRedemptionMode: "flexible",
+  ticketBenefitsConfig: [{ key: "konsumsi", name: "Kupon Konsumsi" }],
 };

@@ -1,0 +1,131 @@
+// File: tests/unit/ticket-core.test.ts
+
+import { describe, expect, it } from "vitest";
+
+import type { FormDefinition } from "@/lib/forms/types";
+import { generateQrDataUrl, generateQrSvg } from "@/lib/tickets/qr";
+import {
+  generateTicketCode,
+  parseBenefitsConfig,
+  parseScannedTicketCode,
+  resolveAttendeeName,
+  signTicketCode,
+} from "@/lib/tickets/ticket-code";
+
+describe("Ticket Code & Security", () => {
+  it("menghasilkan kode tiket dengan format ROH-<SLUG>-<6_CHARS>", () => {
+    const code = generateTicketCode("ibadah-natal");
+    expect(code).toMatch(/^ROH-IBADA-[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{6}$/);
+
+    const fallbackCode = generateTicketCode("!@#$%");
+    expect(fallbackCode).toMatch(/^ROH-EVT-[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{6}$/);
+  });
+
+  it("menghasilkan HMAC signature 16 karakter yang deterministik", () => {
+    const code = "ROH-NATAL-7X9B2C";
+    const sig1 = signTicketCode(code);
+    const sig2 = signTicketCode(code);
+    expect(sig1).toHaveLength(16);
+    expect(sig1).toBe(sig2);
+
+    const sigOther = signTicketCode("ROH-NATAL-999999");
+    expect(sigOther).not.toBe(sig1);
+  });
+
+  it("mengurai kode dari berbagai format scanner", () => {
+    // Format 1: Format standar QR payload
+    const payload = "ROHKRIS:TICKET:ROH-NATAL-7X9B2C:a1b2c3d4e5f67890";
+    expect(parseScannedTicketCode(payload)).toBe("ROH-NATAL-7X9B2C");
+
+    // Format 2: URL dengan query param code
+    const urlWithCode = "https://rohkris.sch.id/admin/kegiatan/123/scan?code=ROH-NATAL-7X9B2C";
+    expect(parseScannedTicketCode(urlWithCode)).toBe("ROH-NATAL-7X9B2C");
+
+    // Format 2b: URL dengan path
+    const urlWithPath = "https://rohkris.sch.id/tiket/ROH-NATAL-7X9B2C";
+    expect(parseScannedTicketCode(urlWithPath)).toBe("ROH-NATAL-7X9B2C");
+
+    // Format 3: Raw code dari barcode gun scanner
+    const raw = "ROH-NATAL-7X9B2C";
+    expect(parseScannedTicketCode(raw)).toBe("ROH-NATAL-7X9B2C");
+
+    // Format lowercase
+    expect(parseScannedTicketCode("roh-natal-7x9b2c")).toBe("ROH-NATAL-7X9B2C");
+
+    // Invalid string
+    expect(parseScannedTicketCode("")).toBeNull();
+    expect(parseScannedTicketCode("halo-dunia-bukan-tiket")).toBeNull();
+  });
+});
+
+describe("Benefits Configuration & Attendee Name Resolution", () => {
+  it("mengurai konfigurasi kupon dari JSON atau fallback ke bawaan", () => {
+    const customJson = JSON.stringify([
+      { key: "konsumsi", name: "Kupon Konsumsi" },
+      { key: "souvenir", name: "Souvenir Kaos" },
+    ]);
+    const parsed = parseBenefitsConfig(customJson);
+    expect(parsed).toHaveLength(2);
+    expect(parsed[1]?.name).toBe("Souvenir Kaos");
+
+    // Fallback default jika null / invalid
+    expect(parseBenefitsConfig(null)).toEqual([{ key: "konsumsi", name: "Kupon Konsumsi" }]);
+    expect(parseBenefitsConfig("invalid-json")).toEqual([{ key: "konsumsi", name: "Kupon Konsumsi" }]);
+    expect(parseBenefitsConfig("[]")).toEqual([{ key: "konsumsi", name: "Kupon Konsumsi" }]);
+  });
+
+  it("mendeteksi nama peserta dari jawaban formulir", () => {
+    const def: FormDefinition = {
+      schemaVersion: 1,
+      sections: [
+        {
+          id: "sec1",
+          title: "Bagian 1",
+          items: [
+            { kind: "short_text", id: "q_email", title: "Email", required: true },
+            { kind: "short_text", id: "q_nama_lengkap", title: "Nama Lengkap Peserta", required: true },
+            { kind: "short_text", id: "q_kelas", title: "Kelas", required: true },
+          ],
+        },
+      ],
+    };
+
+    const answers = {
+      q_email: "budi@example.com",
+      q_nama_lengkap: "Budi Santoso",
+      q_kelas: "XII RPL 1",
+    };
+
+    // Deteksi otomatis menemukan field bernama "Nama Lengkap Peserta"
+    expect(resolveAttendeeName(answers, def)).toBe("Budi Santoso");
+
+    // Menggunakan custom question id
+    expect(resolveAttendeeName(answers, def, "q_kelas")).toBe("XII RPL 1");
+
+    // Fallback jika tidak ada pertanyaan bernama nama
+    const defTanpaNama: FormDefinition = {
+      schemaVersion: 1,
+      sections: [
+        {
+          id: "sec1",
+          title: "Bagian 1",
+          items: [{ kind: "short_text", id: "q_id", title: "NIS", required: true }],
+        },
+      ],
+    };
+    expect(resolveAttendeeName({ q_id: "12345" }, defTanpaNama)).toBe("12345");
+  });
+});
+
+describe("QR Code Generation", () => {
+  it("menghasilkan Data URL gambar QR code valid", async () => {
+    const dataUrl = await generateQrDataUrl("ROH-NATAL-7X9B2C");
+    expect(dataUrl).toMatch(/^data:image\/png;base64,/);
+  });
+
+  it("menghasilkan SVG QR code valid", async () => {
+    const svg = await generateQrSvg("ROH-NATAL-7X9B2C");
+    expect(svg).toContain("<svg");
+    expect(svg).toContain("</svg>");
+  });
+});

@@ -1,3 +1,5 @@
+// File: lib/actions/formulir-publik.ts
+
 "use server";
 
 import { after } from "next/server";
@@ -10,6 +12,7 @@ import { getSiteSettings } from "@/lib/data/public";
 import { isEmailConfigured, sendEmail } from "@/lib/email/mailer";
 import { getAdminSecretKey, getSiteUrl } from "@/lib/env";
 import { canEditResponse, getRegistrationState } from "@/lib/events/status";
+import { formatTanggal, formatRentangKegiatan } from "@/lib/format/date";
 import { buildConfirmationEmail } from "@/lib/forms/email-template";
 import { detectFileType, sanitizeOriginalName } from "@/lib/forms/files";
 import {
@@ -29,6 +32,12 @@ import {
 } from "@/lib/forms/token";
 import { FORM_LIMITS, allQuestions, type FormDefinition, type FileUploadQuestion, type StoredAnswers } from "@/lib/forms/types";
 import { isValidEmail, normalizeEmail, validateSubmission } from "@/lib/forms/validate-answers";
+import { generateQrDataUrl } from "@/lib/tickets/qr";
+import {
+  issueTicketInTx,
+  parseBenefitsConfig,
+  resolveAttendeeName,
+} from "@/lib/tickets/data";
 
 /**
  * Server Action formulir internal PUBLIK (tanpa login).
@@ -41,7 +50,18 @@ import { isValidEmail, normalizeEmail, validateSubmission } from "@/lib/forms/va
  *    baris event_forms, sehingga dua kiriman bersamaan tidak bisa sama-sama
  *    lolos ketika sisa kuota tinggal satu
  *  - berkas disimpan di folder privat, jenisnya dideteksi dari isi berkas
+ *  - penerbitan e-tiket dan kode QR resmi secara atomik di dalam transaksi
  */
+
+export type TicketPayload = {
+  ticketCode: string;
+  attendeeName: string;
+  qrDataUrl: string;
+  benefits: Array<{ key: string; name: string }>;
+  eventTitle: string;
+  eventDate?: string | null;
+  eventLocation?: string | null;
+};
 
 export type KirimFormulirResult =
   | {
@@ -50,6 +70,7 @@ export type KirimFormulirResult =
       /** Tautan ubah jawaban (relatif), bila diizinkan. Hanya ditampilkan sekali. */
       editPath: string | null;
       emailQueued: boolean;
+      ticket?: TicketPayload | null;
     }
   | {
       ok: false;
@@ -144,7 +165,7 @@ function parseJawaban(formData: FormData): unknown {
   }
 }
 
-/** Menjadwalkan email konfirmasi setelah respons terkirim (best effort). */
+/** Menjadwalkan email konfirmasi & tiket setelah respons terkirim (best effort). */
 function jadwalkanEmail(opts: {
   responseId: string;
   formId: string;
@@ -158,23 +179,59 @@ function jadwalkanEmail(opts: {
   files: Map<string, { id: string; name: string }>;
   editPath: string | null;
   edited: boolean;
+  ticket?: TicketPayload | null;
 }) {
   after(async () => {
     let terkirim = false;
     try {
       if ((await countEmailsTo(opts.emailNorm)) < EMAIL_PER_ADDRESS_PER_DAY) {
         const settings = await getSiteSettings();
+        const attachments: Array<{ filename: string; content?: Buffer | string; cid?: string; contentType?: string }> = [];
+
+        let qrCid: string | undefined = undefined;
+        if (opts.ticket?.qrDataUrl) {
+          try {
+            const base64Data = opts.ticket.qrDataUrl.replace(/^data:image\/\w+;base64,/, "");
+            const qrBuffer = Buffer.from(base64Data, "base64");
+            qrCid = "ticket-qr-code";
+            attachments.push({
+              filename: `tiket-${opts.ticket.ticketCode}.png`,
+              content: qrBuffer,
+              cid: qrCid,
+              contentType: "image/png",
+            });
+          } catch (qrErr) {
+            console.error("Gagal menyematkan lampiran QR code:", (qrErr as Error).message);
+          }
+        }
+
         const isi = buildConfirmationEmail({
           siteName: settings.site_name ?? "Rohkris SMK Plus Pelita Nusantara",
           eventTitle: opts.event.title,
+          eventDate: formatRentangKegiatan(opts.event.start_at, opts.event.end_at) ?? formatTanggal(opts.event.start_at),
+          eventLocation: opts.event.location,
           definition: opts.definition,
           answers: opts.answers,
           files: opts.files,
           editUrl: opts.editPath ? `${getSiteUrl()}${opts.editPath}` : null,
           confirmationMessage: opts.form.confirmation_message,
           edited: opts.edited,
+          ticket: opts.ticket
+            ? {
+                ticketCode: opts.ticket.ticketCode,
+                attendeeName: opts.ticket.attendeeName,
+                benefits: opts.ticket.benefits,
+                qrCid,
+              }
+            : null,
         });
-        terkirim = await sendEmail({ to: opts.to, ...isi, replyTo: settings.contact_email ?? null });
+
+        terkirim = await sendEmail({
+          to: opts.to,
+          ...isi,
+          replyTo: settings.contact_email ?? null,
+          attachments: attachments.length > 0 ? attachments : undefined,
+        });
         await recordRateEvent(opts.formId, "email", opts.ip, opts.emailNorm);
       }
     } catch (error) {
@@ -194,12 +251,6 @@ function jadwalkanEmail(opts: {
 /**
  * Saat kiriman membuat kuota penuh, halaman publik ber-ISR (detail kegiatan,
  * daftar, jadwal, beranda) perlu menampilkan "Kuota Penuh".
- *
- * Dijalankan di after(): revalidatePath yang dipanggil langsung di Server
- * Action ikut menyegarkan halaman yang SEDANG dibuka peserta, sehingga peserta
- * yang baru berhasil mendaftar justru melihat "Kuota Penuh" alih-alih layar
- * terima kasih. Halaman /daftar & panel admin sudah dinamis, jadi tidak perlu
- * direvalidasi.
  */
 function revalidateBilaPenuh(event: EventRow) {
   after(() => {
@@ -290,7 +341,13 @@ export async function kirimFormulir(eventId: string, formData: FormData): Promis
   const emailNorm = email ? normalizeEmail(email) : null;
   const kirimEmail = Boolean(form.send_confirmation && email && isEmailConfigured());
 
-  let hasilTx: { ok: true; penuh: boolean } | { ok: false; message: string; errors?: Record<string, string> };
+  // Data tiket (jika tiket diaktifkan)
+  const isTicketEnabled = form.ticket_enabled !== false;
+  const attendeeName = resolveAttendeeName(answers, definition, form.ticket_name_question_id);
+  const benefits = parseBenefitsConfig(form.ticket_benefits_config);
+  let createdTicketCode: string | null = null;
+
+  let hasilTx: { ok: true; penuh: boolean; ticketCode?: string } | { ok: false; message: string; errors?: Record<string, string> };
   try {
     hasilTx = await transaction(async (tx) => {
       const [kunciForm] = await tx.query<EventFormRow>("SELECT * FROM event_forms WHERE id = ? FOR UPDATE", [form.id]);
@@ -327,6 +384,7 @@ export async function kirimFormulir(eventId: string, formData: FormData): Promis
           kirimEmail ? "pending" : "none", ip, await getUserAgent(),
         ],
       );
+
       for (const [i, f] of fileRows.entries()) {
         await tx.execute(
           `INSERT INTO form_response_files (id, response_id, question_id, storage_key, original_name, mime, size_bytes)
@@ -334,10 +392,24 @@ export async function kirimFormulir(eventId: string, formData: FormData): Promis
           [f.id, responseId, f.questionId, kunci[i], f.name, f.mime, f.bytes.byteLength],
         );
       }
+
+      let issuedCode: string | undefined = undefined;
+      if (isTicketEnabled) {
+        const ticketRes = await issueTicketInTx(tx, {
+          responseId,
+          eventId: event.id,
+          eventSlug: event.slug,
+          attendeeName,
+          attendeeEmail: email,
+          benefits,
+        });
+        issuedCode = ticketRes.ticketCode;
+      }
+
       await tx.execute("UPDATE event_forms SET response_count = response_count + 1 WHERE id = ?", [form.id]);
 
       const penuh = kunciForm.quota !== null && kunciForm.response_count + 1 >= kunciForm.quota;
-      return { ok: true, penuh } as const;
+      return { ok: true, penuh, ticketCode: issuedCode } as const;
     });
   } catch (error) {
     await hapusBerkasFormulir(kunci);
@@ -354,8 +426,28 @@ export async function kirimFormulir(eventId: string, formData: FormData): Promis
     return { ok: false, message: hasilTx.message, errors: hasilTx.errors };
   }
 
+  createdTicketCode = hasilTx.ticketCode ?? null;
+
   await recordRateEvent(form.id, "submit", ip).catch(() => undefined);
   if (hasilTx.penuh) revalidateBilaPenuh(event);
+
+  let ticketPayload: TicketPayload | null = null;
+  if (createdTicketCode) {
+    try {
+      const qrDataUrl = await generateQrDataUrl(createdTicketCode);
+      ticketPayload = {
+        ticketCode: createdTicketCode,
+        attendeeName,
+        qrDataUrl,
+        benefits,
+        eventTitle: event.title,
+        eventDate: formatRentangKegiatan(event.start_at, event.end_at) ?? formatTanggal(event.start_at),
+        eventLocation: event.location,
+      };
+    } catch (qrErr) {
+      console.error("Gagal membuat QR data URL tiket:", (qrErr as Error).message);
+    }
+  }
 
   const editPath = editToken ? `/kegiatan/${event.slug}/daftar/ubah/${editToken}` : null;
   if (kirimEmail && email && emailNorm) {
@@ -363,6 +455,7 @@ export async function kirimFormulir(eventId: string, formData: FormData): Promis
       responseId, formId: form.id, ip, to: email, emailNorm, event, form, definition, answers,
       files: new Map(fileRows.map((f) => [f.id, { id: f.id, name: f.name }])),
       editPath, edited: false,
+      ticket: ticketPayload,
     });
   }
 
@@ -371,6 +464,7 @@ export async function kirimFormulir(eventId: string, formData: FormData): Promis
     message: form.confirmation_message || "Jawaban Anda sudah kami terima. Terima kasih!",
     editPath,
     emailQueued: kirimEmail,
+    ticket: ticketPayload,
   };
 }
 
@@ -448,6 +542,7 @@ export async function ubahJawaban(token: string, formData: FormData): Promise<Ki
     answers[qid] = [...ids];
     ids.forEach((id) => tetap.add(id));
   }
+
   const baru = berkas.files.filter((f) => dipakai.has(f.questionId)).map((f) => ({ ...f, id: newId() }));
   for (const f of baru) answers[f.questionId] = [...((answers[f.questionId] as string[] | undefined) ?? []), f.id];
 
@@ -483,6 +578,15 @@ export async function ubahJawaban(token: string, formData: FormData): Promise<Ki
           `INSERT INTO form_response_files (id, response_id, question_id, storage_key, original_name, mime, size_bytes)
            VALUES (?, ?, ?, ?, ?, ?, ?)`,
           [f.id, response.id, f.questionId, kunciBaru[i], f.name, f.mime, f.bytes.byteLength],
+        );
+      }
+
+      // Perbarui nama di tiket bila pertanyaan nama diedit
+      if (form.ticket_enabled !== false) {
+        const attendeeNameBaru = resolveAttendeeName(answers, definition, form.ticket_name_question_id);
+        await tx.execute(
+          "UPDATE event_tickets SET attendee_name = ? WHERE response_id = ?",
+          [attendeeNameBaru, response.id],
         );
       }
     });

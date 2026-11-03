@@ -1,15 +1,20 @@
+// File: components/formulir/FormulirPublik.tsx
+
 "use client";
 
 import Link from "next/link";
 import { useRef, useState, useTransition } from "react";
 
 import { BlokTeks, InputPertanyaan, type BerkasLama } from "@/components/formulir/InputPertanyaan";
+import { AksiUnduhTiket } from "@/components/tiket/AksiUnduhTiket";
+import { KartuETiket } from "@/components/tiket/KartuETiket";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { IconAlert, IconArrowLeft, IconArrowRight, IconCheck, IconCopy } from "@/components/ui/Icons";
 import { cn } from "@/lib/cn";
 import { nextSectionIndex } from "@/lib/forms/branching";
-import { FORM_LIMITS, type Answers, type AnswerValue, type FormDefinition, allQuestions } from "@/lib/forms/types";
+import { type Answers, type AnswerValue, type FormDefinition, allQuestions } from "@/lib/forms/types";
 import { isValidEmail, validateSection } from "@/lib/forms/validate-answers";
+import type { TicketPayload } from "@/lib/actions/formulir-publik";
 
 /**
  * Formulir internal multi-bagian (pengisian publik, ubah jawaban, pratinjau).
@@ -19,10 +24,11 @@ import { isValidEmail, validateSection } from "@/lib/forms/validate-answers";
  * - "Kembali" memakai tumpukan riwayat, sehingga lompatan cabang tetap benar.
  * - Semua bagian tetap ter-mount (yang tidak aktif disembunyikan) agar isian
  *   tidak hilang ketika berpindah bagian.
+ * - Menampilkan E-Tiket dengan Kode QR dan tombol unduh (JPG/PDF) jika diterbitkan.
  */
 
 export type KirimFn = (formData: FormData) => Promise<
-  | { ok: true; message: string; editPath: string | null; emailQueued: boolean }
+  | { ok: true; message: string; editPath: string | null; emailQueued: boolean; ticket?: TicketPayload | null }
   | { ok: false; message: string; errors?: Record<string, string>; reload?: boolean }
 >;
 
@@ -64,7 +70,12 @@ export function FormulirPublik({
   const [riwayat, setRiwayat] = useState<number[]>([0]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [pesan, setPesan] = useState<{ tone: "danger" | "info"; text: string; reload?: boolean } | null>(null);
-  const [selesai, setSelesai] = useState<{ message: string; editPath: string | null; emailQueued: boolean } | null>(null);
+  const [selesai, setSelesai] = useState<{
+    message: string;
+    editPath: string | null;
+    emailQueued: boolean;
+    ticket?: TicketPayload | null;
+  } | null>(null);
   const [pending, startTransition] = useTransition();
   const atasRef = useRef<HTMLDivElement>(null);
 
@@ -98,93 +109,117 @@ export function FormulirPublik({
   function cekBagian(): Record<string, string> {
     if (!section) return {};
     const e = validateSection(section, answers, hitungBerkas());
-    // Email & persetujuan diperiksa di bagian pertama / terakhir.
-    if (indeks === 0 && collectEmail && !emailLocked) {
+    if (indeks === 0 && collectEmail) {
       if (!email.trim()) e._email = "Alamat email wajib diisi.";
-      else if (!isValidEmail(email.trim())) e._email = "Masukkan alamat email yang valid.";
+      else if (!isValidEmail(email)) e._email = "Masukkan alamat email yang valid.";
     }
-    if (terakhir && consentText && !consent) e._consent = "Centang persetujuan untuk melanjutkan.";
-    if (terakhir) {
-      const total = Object.values(files).flat().reduce((n, f) => n + f.size, 0);
-      if (total > FORM_LIMITS.submissionFilesMaxBytes) {
-        e._form = `Total ukuran berkas maksimal ${FORM_LIMITS.submissionFilesMaxBytes / (1024 * 1024)} MB per kiriman.`;
-      }
+    if (terakhir && consentText && !consent) {
+      e._consent = "Centang persetujuan untuk melanjutkan.";
     }
     return e;
   }
 
   function lanjut() {
     const e = cekBagian();
-    setErrors(e);
     if (Object.keys(e).length > 0) {
-      setPesan({ tone: "danger", text: "Periksa kembali isian yang ditandai." });
+      setErrors(e);
       fokusGalat(Object.keys(e));
       return;
     }
-    setPesan(null);
     if (tujuan !== null) {
+      setErrors({});
       setRiwayat((r) => [...r, tujuan]);
       gulirKeAtas();
     }
   }
 
   function kembali() {
+    if (riwayat.length <= 1) return;
     setErrors({});
     setPesan(null);
-    setRiwayat((r) => (r.length > 1 ? r.slice(0, -1) : r));
+    setRiwayat((r) => r.slice(0, -1));
     gulirKeAtas();
+  }
+
+  function bangunPayload(): FormData {
+    const fd = new FormData();
+    fd.append("answers", JSON.stringify(answers));
+    fd.append("token", token);
+    if (collectEmail) fd.append("email", email.trim());
+    if (consent) fd.append("consent", "on");
+
+    for (const [qid, list] of Object.entries(files)) {
+      for (const f of list) fd.append(`file:${qid}`, f);
+    }
+    for (const [qid, list] of Object.entries(kept)) {
+      for (const f of list) fd.append(`keep:${qid}`, f.id);
+    }
+    return fd;
   }
 
   function kirim() {
     const e = cekBagian();
-    setErrors(e);
     if (Object.keys(e).length > 0) {
-      setPesan({ tone: "danger", text: e._form ?? "Periksa kembali isian yang ditandai." });
+      setErrors(e);
       fokusGalat(Object.keys(e));
       return;
     }
     if (preview || !onSubmit) {
-      setSelesai({ message: "Ini pratinjau — jawaban tidak dikirim.", editPath: null, emailQueued: false });
+      setSelesai({
+        message: "Mode pratinjau: tanggapan tidak disimpan ke server.",
+        editPath: null,
+        emailQueued: false,
+        ticket: null,
+      });
       return;
     }
-    const fd = new FormData();
-    fd.set("token", token);
-    fd.set("answers", JSON.stringify(answers));
-    if (collectEmail && !emailLocked) fd.set("email", email.trim());
-    if (consent) fd.set("consent", "on");
-    for (const [qid, list] of Object.entries(files)) for (const f of list) fd.append(`file:${qid}`, f);
-    for (const [qid, list] of Object.entries(kept)) for (const f of list) fd.append(`keep:${qid}`, f.id);
 
     setPesan(null);
     startTransition(async () => {
       try {
-        const hasil = await onSubmit(fd);
-        if (hasil.ok) {
-          setSelesai({ message: hasil.message, editPath: hasil.editPath, emailQueued: hasil.emailQueued });
+        const hasil = await onSubmit(bangunPayload());
+        if (!hasil.ok) {
+          if (hasil.errors) setErrors(hasil.errors);
+          setPesan({ tone: "danger", text: hasil.message, reload: hasil.reload });
           gulirKeAtas();
           return;
         }
-        setErrors(hasil.errors ?? {});
-        setPesan({ tone: "danger", text: hasil.message, reload: hasil.reload });
-        // Bawa pengguna ke bagian berisi galat pertama bila ada di bagian lain.
-        const ids = Object.keys(hasil.errors ?? {});
-        const bagianGalat = definition.sections.findIndex((s) => s.items.some((it) => ids.includes(it.id)));
-        if (bagianGalat >= 0 && bagianGalat !== indeks) {
-          const posisi = riwayat.indexOf(bagianGalat);
-          if (posisi >= 0) setRiwayat(riwayat.slice(0, posisi + 1));
-        }
-        fokusGalat(ids);
-      } catch {
+        setSelesai({
+          message: hasil.message,
+          editPath: hasil.editPath,
+          emailQueued: hasil.emailQueued,
+          ticket: hasil.ticket,
+        });
+        gulirKeAtas();
+      } catch (err) {
         setPesan({
           tone: "danger",
-          text: "Kiriman gagal. Bila Anda melampirkan berkas, pastikan totalnya tidak lebih dari 5 MB, lalu coba lagi.",
+          text: (err as Error).message || "Terjadi kesalahan koneksi. Periksa internet Anda lalu coba lagi.",
         });
+        gulirKeAtas();
       }
     });
   }
 
-  if (selesai) return <LayarSelesai {...selesai} backHref={backHref} />;
-  if (!section) return null;
+  if (selesai) {
+    return (
+      <LayarSelesai
+        message={selesai.message}
+        editPath={selesai.editPath}
+        emailQueued={selesai.emailQueued}
+        ticket={selesai.ticket}
+        backHref={backHref}
+      />
+    );
+  }
+
+  if (!section) {
+    return (
+      <div role="alert" className="rounded-card border border-navy-200/80 bg-white p-6 text-center text-navy-600">
+        Formulir belum memiliki pertanyaan.
+      </div>
+    );
+  }
 
   const hapusGalat = (id: string) =>
     setErrors((e) => {
@@ -381,11 +416,13 @@ function LayarSelesai({
   message,
   editPath,
   emailQueued,
+  ticket,
   backHref,
 }: {
   message: string;
   editPath: string | null;
   emailQueued: boolean;
+  ticket?: TicketPayload | null;
   backHref?: string;
 }) {
   const [tersalin, setTersalin] = useState(false);
@@ -396,10 +433,38 @@ function LayarSelesai({
       <span className="mx-auto grid size-14 place-items-center rounded-full bg-sage-100 text-sage-700 ring-1 ring-inset ring-sage-300">
         <IconCheck className="size-6" />
       </span>
-      <h2 className="mt-5 text-2xl font-bold tracking-heading text-navy-950">Terima kasih!</h2>
-      <p className="mx-auto mt-2 max-w-md whitespace-pre-line leading-relaxed text-navy-600">{message}</p>
+      <h2 className="mt-5 text-2xl font-bold tracking-heading text-navy-950 sm:text-3xl">Pendaftaran Berhasil!</h2>
+      <p className="mx-auto mt-2 max-w-lg whitespace-pre-line leading-relaxed text-navy-600">{message}</p>
       {emailQueued ? (
-        <p className="mx-auto mt-2 max-w-md text-sm text-navy-500">Salinan jawaban sedang dikirim ke email Anda.</p>
+        <p className="mx-auto mt-2 max-w-md text-sm text-navy-500">
+          Salinan jawaban dan E-Tiket Anda juga telah dikirim ke email.
+        </p>
+      ) : null}
+
+      {/* Render E-Tiket Resmi dengan Kode QR jika diterbitkan */}
+      {ticket ? (
+        <div className="my-8 text-left">
+          <KartuETiket
+            ticketCode={ticket.ticketCode}
+            attendeeName={ticket.attendeeName}
+            eventTitle={ticket.eventTitle}
+            eventDate={ticket.eventDate}
+            eventLocation={ticket.eventLocation}
+            qrDataUrl={ticket.qrDataUrl}
+            benefits={ticket.benefits}
+            aksiTambahan={
+              <AksiUnduhTiket
+                ticketCode={ticket.ticketCode}
+                attendeeName={ticket.attendeeName}
+                eventTitle={ticket.eventTitle}
+                eventDate={ticket.eventDate}
+                eventLocation={ticket.eventLocation}
+                qrDataUrl={ticket.qrDataUrl}
+                benefits={ticket.benefits}
+              />
+            }
+          />
+        </div>
       ) : null}
 
       {url ? (

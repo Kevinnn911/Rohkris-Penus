@@ -1,3 +1,5 @@
+// File: lib/forms/types.ts
+
 /**
  * Tipe formulir internal (pengganti Google Form).
  *
@@ -165,6 +167,11 @@ export type FormDefinition = {
   sections: FormSection[];
 };
 
+export type TicketBenefitSetting = {
+  key: string;
+  name: string;
+};
+
 /** Pengaturan formulir (kolom event_forms, bukan bagian dari definisi). */
 export type FormSettings = {
   quota: number | null;
@@ -174,6 +181,10 @@ export type FormSettings = {
   sendConfirmation: boolean;
   confirmationMessage: string | null;
   consentText: string | null;
+  ticketEnabled: boolean;
+  ticketNameQuestionId: string | null;
+  ticketRedemptionMode: "flexible" | "all_in_one";
+  ticketBenefitsConfig: TicketBenefitSetting[];
 };
 
 // ---------------------------------------------------------------------------

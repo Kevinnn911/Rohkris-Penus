@@ -1,3 +1,5 @@
+// File: components/admin/SubNavKegiatan.tsx
+
 "use client";
 
 import Link from "next/link";
@@ -6,9 +8,9 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
 
 /**
- * Tab halaman kegiatan di panel admin: Detail | Formulir | Respons.
- * Tab Formulir/Respons hanya relevan untuk mode pendaftaran internal, tetapi
- * tetap ditampilkan (dengan keterangan di halamannya) agar mudah ditemukan.
+ * Tab halaman kegiatan di panel admin: Detail | Formulir | Respons | Tiket | Pindai QR.
+ * Tab Formulir/Respons/Tiket/Pindai QR hanya relevan untuk mode pendaftaran internal,
+ * tetapi tetap ditampilkan agar alur kerja panitia rapi dan konsisten.
  */
 export function SubNavKegiatan({
   eventId,
@@ -17,7 +19,7 @@ export function SubNavKegiatan({
 }: {
   eventId: string;
   jumlahRespons: number | null;
-  /** Dipanggil sebelum berpindah tab — builder memakainya untuk menahan perubahan belum disimpan. */
+  /** Dipanggil sebelum berpindah tab - builder memakainya untuk menahan perubahan belum disimpan. */
   onNavigate?: (event: { preventDefault: () => void }) => void;
 }) {
   const pathname = usePathname();
@@ -30,6 +32,16 @@ export function SubNavKegiatan({
       label: "Respons",
       aktif: pathname.startsWith(`${dasar}/respons`),
       jumlah: jumlahRespons,
+    },
+    {
+      href: `${dasar}/tiket`,
+      label: "Tiket",
+      aktif: pathname.startsWith(`${dasar}/tiket`),
+    },
+    {
+      href: `${dasar}/scan`,
+      label: "Pindai QR",
+      aktif: pathname.startsWith(`${dasar}/scan`),
     },
   ];
 

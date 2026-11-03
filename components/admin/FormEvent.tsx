@@ -1,3 +1,5 @@
+// File: components/admin/FormEvent.tsx
+
 "use client";
 
 import { useActionState, useState } from "react";
@@ -13,6 +15,7 @@ import {
 import { UnggahGambar } from "@/components/admin/UnggahGambar";
 import { ButtonLink } from "@/components/ui/Button";
 import {
+  IconArrowRight,
   IconArrowUpRight,
   IconCalendar,
   IconCheck,
@@ -234,6 +237,36 @@ export function FormEvent({
             ))}
           </div>
         </fieldset>
+
+        {modePendaftaran === "internal" ? (
+          <div className="rounded-2xl border border-navy-200 bg-navy-50/70 p-4 sm:p-5">
+            {event ? (
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-navy-950">Atur Pertanyaan Formulir Internal</p>
+                  <p className="text-sm leading-relaxed text-navy-600">
+                    Jangan lupa klik <strong>Simpan Perubahan</strong> di bawah jika baru mengganti mode, lalu susun pertanyaan di halaman Formulir.
+                  </p>
+                </div>
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <ButtonLink href={`/admin/kegiatan/${event.id}/formulir`} variant="primary" size="sm">
+                    Atur Pertanyaan Formulir
+                    <IconArrowRight className="size-4" />
+                  </ButtonLink>
+                  <ButtonLink href={`/admin/kegiatan/${event.id}/respons`} variant="secondary" size="sm">
+                    Lihat Respons
+                  </ButtonLink>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm leading-relaxed text-navy-700">
+                <strong>Cara mengatur:</strong> Isi judul &amp; deskripsi kegiatan terlebih dahulu, lalu klik tombol{" "}
+                <strong>Simpan Kegiatan</strong> di bagian paling bawah. Setelah kegiatan tersimpan, klik tombol{" "}
+                <strong>Formulir</strong> pada kegiatan tersebut untuk menyusun daftar pertanyaan.
+              </p>
+            )}
+          </div>
+        ) : null}
 
         <SelectField
           id="registration_status"

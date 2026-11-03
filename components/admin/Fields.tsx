@@ -1,3 +1,5 @@
+// File: components/admin/Fields.tsx
+
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -120,13 +122,15 @@ export function TextField({
   bantuan?: string;
   error?: string[];
 }) {
+  const terkontrol = rest.value !== undefined;
+
   return (
     <Pembungkus id={id} label={label} wajib={wajib} bantuan={bantuan} error={error}>
       <input
         id={id}
         name={name}
         type={type}
-        defaultValue={defaultValue ?? ""}
+        defaultValue={terkontrol ? undefined : (defaultValue ?? "")}
         required={wajib}
         aria-invalid={error?.length ? true : undefined}
         aria-describedby={describedBy(id, bantuan, error)}

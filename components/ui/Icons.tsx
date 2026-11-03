@@ -1,7 +1,9 @@
+// File: components/ui/Icons.tsx
+
 import type { SVGProps } from "react";
 
 /**
- * Ikon garis sederhana (stroke 1.75) — digambar sendiri agar tidak menambah
+ * Ikon garis sederhana (stroke 1.75) - digambar sendiri agar tidak menambah
  * dependensi. Semua ikon bersifat dekoratif (aria-hidden); makna selalu
  * disampaikan lewat teks di sebelahnya.
  */
@@ -573,6 +575,25 @@ export function IconChart(props: IconProps) {
     <Svg {...props}>
       <path d="M4 20h16" />
       <path d="M7 16v-5M12 16V7M17 16v-8" />
+    </Svg>
+  );
+}
+
+export function IconTicket(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2Z" />
+      <path d="M13 5v2M13 11v2M13 17v2" />
+    </Svg>
+  );
+}
+
+export function IconPrinter(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M6 9V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v5" />
+      <path d="M6 18H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-1" />
+      <rect x="6" y="14" width="12" height="7" rx="1" />
     </Svg>
   );
 }

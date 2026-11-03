@@ -1,3 +1,5 @@
+// File: components/admin/formulir/PembangunFormulir.tsx
+
 "use client";
 
 import Link from "next/link";
@@ -30,12 +32,12 @@ import {
 } from "@/lib/forms/builder-reducer";
 import { parseDefinition, unreachableSections } from "@/lib/forms/definition-schema";
 import { QUESTION_KIND_LABEL } from "@/lib/forms/display";
-import type { FormDefinition, FormSettings, QuestionKind } from "@/lib/forms/types";
+import { allQuestions, type FormDefinition, type FormSettings, type Question, type QuestionKind } from "@/lib/forms/types";
 
 type Tab = "pertanyaan" | "pengaturan" | "pratinjau";
 
 /**
- * Builder formulir internal (admin) — mirip Google Form: bagian, pertanyaan,
+ * Builder formulir internal (admin) - mirip Google Form: bagian, pertanyaan,
  * opsi, lompat bagian, pengaturan, dan pratinjau memakai renderer publik.
  * State dikelola reducer murni (lib/forms/builder-reducer, diuji unit) lalu
  * disimpan utuh lewat Server Action simpanFormulir.
@@ -65,8 +67,7 @@ export function PembangunFormulir({
   const [state, dispatch] = useReducer(
     (st: BuilderState, a: BuilderAction) => builderReducer(st, a),
     null,
-    () =>
-    initialBuilderState(initialDefinition, initialSettings),
+    () => initialBuilderState(initialDefinition, initialSettings),
   );
   const [revision, setRevision] = useState(revisiAwal);
   const [tab, setTab] = useState<Tab>("pertanyaan");
@@ -144,6 +145,8 @@ export function PembangunFormulir({
     for (const s of definition.sections) for (const it of s.items) if (it.kind !== "text") peta.set(it.id, (n += 1));
     return peta;
   }, [definition]);
+
+  const daftarPertanyaan = useMemo(() => allQuestions(definition), [definition]);
 
   return (
     <div className="space-y-6">
@@ -367,6 +370,7 @@ export function PembangunFormulir({
       {tab === "pengaturan" ? (
         <PanelPengaturan
           settings={settings}
+          questions={daftarPertanyaan}
           emailConfigured={emailConfigured}
           responseCount={responseCount}
           masalah={masalah.filter((m) => m.path[0] === "settings").map((m) => m.message)}
@@ -511,12 +515,14 @@ function Saklar({
 
 function PanelPengaturan({
   settings: s,
+  questions,
   emailConfigured,
   responseCount,
   masalah,
   onChange,
 }: {
   settings: FormSettings;
+  questions: Question[];
   emailConfigured: boolean;
   responseCount: number;
   masalah: string[];
@@ -555,6 +561,126 @@ function PanelPengaturan({
           disabled={!s.collectEmail || !emailConfigured}
           onToggle={(v) => onChange({ sendConfirmation: v })}
         />
+      </div>
+
+      {/* Konfigurasi E-Tiket & Kode QR */}
+      <div className="divide-y divide-navy-100 rounded-card border border-navy-200/80 bg-white px-5 sm:px-6">
+        <Saklar
+          label="Terbitkan E-Tiket & Kode QR"
+          keterangan="Peserta otomatis mendapatkan e-tiket digital dengan kode QR unik setelah mengisi formulir (dapat diunduh JPG/PDF dan dikirim ke email peserta)."
+          checked={s.ticketEnabled}
+          onToggle={(v) => onChange({ ticketEnabled: v })}
+        />
+        {s.ticketEnabled ? (
+          <div className="space-y-5 py-5">
+            <div>
+              <label htmlFor="ticket-name-q" className="block text-md font-semibold text-navy-950">
+                Pertanyaan penentu nama peserta
+              </label>
+              <p className="mt-0.5 text-sm text-navy-600">
+                Pilih pertanyaan yang jawabannya digunakan sebagai nama peserta yang tercetak di tiket.
+              </p>
+              <select
+                id="ticket-name-q"
+                value={s.ticketNameQuestionId ?? ""}
+                onChange={(e) => onChange({ ticketNameQuestionId: e.target.value ? e.target.value : null })}
+                className={cn(kelasInputBuilder, "mt-2 max-w-md")}
+              >
+                <option value="">{"Otomatis deteksi (pertanyaan bernama \"Nama / Nama Lengkap\")"}</option>
+                {questions
+                  .filter((q) => q.kind === "short_text")
+                  .map((q) => (
+                    <option key={q.id} value={q.id}>
+                      {q.title || `Pertanyaan #${q.id}`} ({QUESTION_KIND_LABEL[q.kind] || q.kind})
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="ticket-mode" className="block text-md font-semibold text-navy-950">
+                Mode penukaran di meja panitia (Scanner)
+              </label>
+              <p className="mt-0.5 text-sm text-navy-600">
+                Tentukan bagaimana panitia memproses check-in dan kupon saat memindai tiket di lokasi acara.
+              </p>
+              <select
+                id="ticket-mode"
+                value={s.ticketRedemptionMode ?? "flexible"}
+                onChange={(e) => onChange({ ticketRedemptionMode: e.target.value as "flexible" | "all_in_one" })}
+                className={cn(kelasInputBuilder, "mt-2 max-w-md")}
+              >
+                <option value="flexible">Fleksibel (Presensi & penukaran kupon dapat dilakukan per stan terpisah)</option>
+                <option value="all_in_one">Semua Sekaligus (Sekali pindai langsung mengonfirmasi presensi & seluruh kupon)</option>
+              </select>
+            </div>
+
+            <div>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <span className="block text-md font-semibold text-navy-950">Daftar Kupon / Manfaat Tiket</span>
+                  <span className="mt-0.5 block text-sm text-navy-600">
+                    Kupon yang dapat ditukarkan peserta di lokasi acara (misal Konsumsi, Souvenir, Photobooth).
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const baru = [...(s.ticketBenefitsConfig ?? [])];
+                    const num = baru.length + 1;
+                    baru.push({ key: `kupon_${num}`, name: `Kupon ${num}` });
+                    onChange({ ticketBenefitsConfig: baru });
+                  }}
+                  className="pressable inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-navy-900 ring-1 ring-inset ring-navy-300 hover:bg-navy-50"
+                >
+                  <IconPlus className="size-3.5" />
+                  Tambah Kupon
+                </button>
+              </div>
+
+              <div className="mt-3 space-y-2">
+                {(s.ticketBenefitsConfig ?? []).map((benefit, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={benefit.name}
+                      placeholder="Nama kupon (misal: Kupon Konsumsi)"
+                      onChange={(e) => {
+                        const copy = [...(s.ticketBenefitsConfig ?? [])];
+                        copy[idx] = { ...benefit, name: e.target.value };
+                        onChange({ ticketBenefitsConfig: copy });
+                      }}
+                      className={cn(kelasInputBuilder, "flex-1 text-sm")}
+                    />
+                    <input
+                      type="text"
+                      value={benefit.key}
+                      placeholder="Kode unik (misal: konsumsi)"
+                      onChange={(e) => {
+                        const copy = [...(s.ticketBenefitsConfig ?? [])];
+                        copy[idx] = { ...benefit, key: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "") };
+                        onChange({ ticketBenefitsConfig: copy });
+                      }}
+                      className={cn(kelasInputBuilder, "w-36 font-mono text-xs")}
+                    />
+                    <button
+                      type="button"
+                      disabled={(s.ticketBenefitsConfig ?? []).length <= 1}
+                      onClick={() => {
+                        const copy = (s.ticketBenefitsConfig ?? []).filter((_, i) => i !== idx);
+                        onChange({ ticketBenefitsConfig: copy });
+                      }}
+                      className={cn(kelasTombolIkon, "text-navy-400 hover:text-danger-600 disabled:opacity-30")}
+                      title="Hapus kupon"
+                    >
+                      <IconTrash className="size-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <div className="grid gap-5 rounded-card border border-navy-200/80 bg-white p-5 sm:p-6">

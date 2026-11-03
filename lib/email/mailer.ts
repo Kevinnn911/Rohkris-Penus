@@ -1,3 +1,5 @@
+// File: lib/email/mailer.ts
+
 import "server-only";
 
 import nodemailer, { type Transporter } from "nodemailer";
@@ -5,7 +7,7 @@ import nodemailer, { type Transporter } from "nodemailer";
 import { getMailConfig } from "@/lib/env";
 
 /**
- * Pengirim email (konfirmasi formulir internal).
+ * Pengirim email (konfirmasi formulir internal & e-tiket).
  *
  * Mendukung dua transport karena banyak hosting cPanel memblokir koneksi
  * SMTP keluar:
@@ -43,12 +45,21 @@ function transporter(): { transporter: Transporter; from: string } | null {
   return { transporter: cache.transporter, from: config.from };
 }
 
+export type EmailAttachment = {
+  filename: string;
+  content?: Buffer | string;
+  path?: string;
+  cid?: string;
+  contentType?: string;
+};
+
 export async function sendEmail(input: {
   to: string;
   subject: string;
   text: string;
   html: string;
   replyTo?: string | null;
+  attachments?: EmailAttachment[];
 }): Promise<boolean> {
   const t = transporter();
   if (!t) return false;
@@ -60,6 +71,7 @@ export async function sendEmail(input: {
       text: input.text,
       html: input.html,
       replyTo: input.replyTo || undefined,
+      attachments: input.attachments,
     });
     return true;
   } catch (error) {

@@ -1,3 +1,5 @@
+// File: lib/data/forms.ts
+
 import "server-only";
 
 import { query, queryOne } from "@/lib/db";
@@ -13,6 +15,7 @@ import { EDIT_TOKEN_PATTERN, deriveFormSecret, hashEditToken, signFormToken } fr
 import { parseDefinition } from "@/lib/forms/definition-schema";
 import type { InternalFormSummary } from "@/lib/events/status";
 import type { FormDefinition, FormSettings, StoredAnswers } from "@/lib/forms/types";
+import { parseBenefitsConfig } from "@/lib/tickets/data";
 
 /**
  * Query formulir internal.
@@ -35,7 +38,7 @@ export function readDefinition(raw: string | null | undefined): FormDefinition |
   return null;
 }
 
-/** Jawaban tersimpan (JSON). Nilai rusak → objek kosong agar tampilan tidak crash. */
+/** Jawaban tersimpan (JSON). Nilai rusak -> objek kosong agar tampilan tidak crash. */
 export function readAnswers(raw: string | null | undefined): StoredAnswers {
   if (!raw) return {};
   try {
@@ -49,12 +52,16 @@ export function readAnswers(raw: string | null | undefined): StoredAnswers {
 export function settingsFromRow(row: EventFormRow): FormSettings {
   return {
     quota: row.quota,
-    collectEmail: row.collect_email,
-    limitOnePerEmail: row.limit_one_per_email,
-    allowEdit: row.allow_edit,
-    sendConfirmation: row.send_confirmation,
+    collectEmail: Boolean(row.collect_email),
+    limitOnePerEmail: Boolean(row.limit_one_per_email),
+    allowEdit: Boolean(row.allow_edit),
+    sendConfirmation: Boolean(row.send_confirmation),
     confirmationMessage: row.confirmation_message,
     consentText: row.consent_text,
+    ticketEnabled: row.ticket_enabled === undefined ? true : Boolean(row.ticket_enabled),
+    ticketNameQuestionId: row.ticket_name_question_id ?? null,
+    ticketRedemptionMode: row.ticket_redemption_mode ?? "flexible",
+    ticketBenefitsConfig: parseBenefitsConfig(row.ticket_benefits_config),
   };
 }
 
@@ -194,7 +201,7 @@ export async function dataUntukUbah(token: string): Promise<ResponsUntukUbah | n
 
 /**
  * Token anti-spam untuk halaman formulir (waktu render ditandatangani).
- * Null bila ADMIN_SECRET_KEY belum diisi — formulir lalu tidak menerima kiriman.
+ * Null bila ADMIN_SECRET_KEY belum diisi - formulir lalu tidak menerima kiriman.
  * `mundurMs` memajukan waktu terbit (dipakai halaman ubah jawaban agar
  * pemeriksaan "terlalu cepat" tidak menghalangi orang yang hanya mengoreksi satu isian).
  */

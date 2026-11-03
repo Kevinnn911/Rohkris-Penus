@@ -150,6 +150,10 @@ export type EventFormRow = {
   send_confirmation: boolean;
   confirmation_message: string | null;
   consent_text: string | null;
+  ticket_enabled: boolean;
+  ticket_name_question_id: string | null;
+  ticket_redemption_mode: "flexible" | "all_in_one";
+  ticket_benefits_config: string | null;
   created_by: string | null;
   updated_by: string | null;
   created_at: string;
@@ -200,4 +204,42 @@ export type FormResponseFileRow = {
  */
 export type EventWithForm = EventRow & {
   form?: { questionCount: number; quota: number | null; responseCount: number } | null;
+};
+
+export type CheckinStatus = "unattended" | "attended";
+export type BenefitStatus = "unclaimed" | "claimed";
+
+export type TicketBenefitConfig = {
+  key: string;
+  name: string;
+};
+
+export type EventTicketRow = {
+  id: string;
+  response_id: string;
+  event_id: string;
+  ticket_code: string;
+  attendee_name: string;
+  attendee_email: string | null;
+  checkin_status: CheckinStatus;
+  checkin_at: string | null;
+  checked_in_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type TicketBenefitRow = {
+  id: string;
+  ticket_id: string;
+  benefit_key: string;
+  benefit_name: string;
+  status: BenefitStatus;
+  claimed_at: string | null;
+  claimed_by: string | null;
+  created_at: string;
+};
+
+export type TicketWithBenefits = EventTicketRow & {
+  benefits: TicketBenefitRow[];
+  checked_in_by_name?: string | null;
 };

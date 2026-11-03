@@ -186,3 +186,16 @@
 * **Target Deadline:** Selesai (22 Oktober 2026)
 
 
+## [MEDIUM] Galat Console React Controlled vs Uncontrolled Input pada TextField Admin
+
+* **Priority:** MEDIUM
+* **Location:** `components/admin/Fields.tsx` (`TextField`)
+* **Severity:** Medium (React Runtime Console Error on `/admin/kegiatan/baru` & `/admin/berita/baru`)
+* **Status:** Resolved (Production Ready)
+* **Root Cause:**
+  1. Komponen `TextField` pada `components/admin/Fields.tsx` menyetel `defaultValue={defaultValue ?? ""}` secara tanpa syarat pada elemen `<input>`, kemudian menyebarkan properti `{...rest}` di bawahnya.
+  2. Ketika komponen pemanggil seperti `FormEvent` atau `FormBerita` mengontrol input secara eksplisit menggunakan `value={judul}` dan `value={slug}`, elemen `<input>` menerima kedua properti `defaultValue=""` dan `value={...}` secara bersamaan, yang memicu galat React 19: `TextField contains an input of type text with both value and defaultValue props`.
+* **Solution:**
+  1. Memeriksa apakah properti `rest.value !== undefined` (`terkontrol`) di dalam `TextField`.
+  2. Hanya menyetel `defaultValue={defaultValue ?? ""}` apabila `rest.value === undefined` (`defaultValue={terkontrol ? undefined : (defaultValue ?? "")}`), sehingga input terkontrol hanya menerima `value` dan input tak-terkontrol hanya menerima `defaultValue`.
+* **Target Deadline:** Selesai (3 November 2026)

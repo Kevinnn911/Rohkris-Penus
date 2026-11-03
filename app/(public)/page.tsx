@@ -62,10 +62,10 @@ export default async function BerandaPage() {
   return (
     <>
       {/* ───────────── Hero ───────────── */}
-      <div className="-mt-[5.25rem] px-3 sm:-mt-24 sm:px-5">
+      <div className="-mt-[5.25rem] sm:-mt-24">
         <section
           aria-labelledby="judul-hero"
-          className="relative isolate mx-auto max-w-7xl overflow-hidden rounded-hero bg-mist pb-36 pt-32 sm:pb-44 sm:pt-40"
+          className="relative isolate w-full overflow-hidden bg-ivory-100 pb-36 pt-32 sm:pb-44 sm:pt-40"
         >
           <HeroBackdrop />
 
@@ -119,7 +119,7 @@ export default async function BerandaPage() {
       </div>
 
       {/* ───────────── Bar pencarian (melayang di tepi bawah hero) ───────────── */}
-      <div className="relative z-10 mx-auto -mt-24 max-w-5xl px-4 sm:-mt-20 sm:px-6">
+      <div className="relative z-10 mx-auto -mt-28 max-w-5xl px-4 sm:-mt-32 sm:px-6">
         <form
           action="/kegiatan"
           method="get"
