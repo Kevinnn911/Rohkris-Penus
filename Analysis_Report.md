@@ -594,3 +594,26 @@
 * **Impact:**
   - Seluruh alur pendaftaran, pengubahan jawaban, unduh PNG/cetak PDF, tiket cadangan admin, hingga pemindaian QR oleh panitia di lapangan berjalan konsisten, aman dari pemalsuan maupun salah kamar kegiatan, dan bebas dari risiko kegagalan transaksi database.
 
+
+## [DONE] Pembersihan Berkas Usang, Sinkronisasi Repository GitHub, dan Pemaketan Deployment Terisolasi cPanel
+
+* **Status:** Selesai (Production Ready & Published)
+* **Feature:** Pembersihan komponen/skrip/arsip usang yang tidak lagi digunakan, publikasi bersih ke GitHub (`origin main`), serta pembuatan bundel produksi mandiri (`rohkris-build.zip`) beserta panduan isolasi 5 lapis untuk shared hosting cPanel.
+* **Technical Implementation:**
+  1. **Pembersihan Berkas & Komponen Usang:**
+     - Menghapus `components/site/KategoriCarousel.tsx` yang sudah tidak diimpor di mana pun sejak digantikan oleh `components/site/KategoriFleksibel.tsx`, serta menghapus komponen `KategoriCard` dan impor `Link` yang tidak terpakai pada `components/site/Kategori.tsx`.
+     - Menghapus skrip lama `scripts/pack-standalone.mjs` (workaround era Turbopack) dan menggabungkan fitur normalisasi path Linux serta pemicu `tmp/restart.txt` ke dalam skrip standar `scripts/pack-build.ps1`.
+     - Menghapus skrip sekali-pakai `scripts/generate-favicons.mjs` beserta berkas mentah `Logo.png` (1.27 MB) di direktori root karena seluruh ikon dan `public/Logo.png` teroptimasi telah tersedia di `app/` dan `public/`.
+     - Menghapus `public/robots.txt` statis lama yang duplikat agar rute dinamis `app/robots.ts` (yang menyertakan `Disallow: /kegiatan/*/daftar/ubah/`) menjadi satu-satunya sumber kebenaran.
+     - Menghapus arsip `.zip` lama yang tidak diperlukan (`rohkris-deploy.zip`, `rohkris-next-build.zip`, `rohkris-next.zip`) dan folder kosong `.claude/`.
+  2. **Peningkatan Skrip Deployment & Isolasi Hosting (`scripts/pack-build.ps1`, `scripts/buat-admin.mjs`, `README.md`):**
+     - Memperbarui `scripts/buat-admin.mjs` agar otomatis mendukung fallback resolusi `mysql2/promise` dari `.next/standalone/node_modules/mysql2/promise.js`, sehingga pembuatan akun super admin di terminal cPanel tetap berjalan tanpa perlu `npm install` di server.
+     - Memperbarui `scripts/pack-build.ps1` untuk menormalisasi separator path Windows ke format POSIX Linux pada `.next/standalone/.next/required-server-files.json` dan `server.js`, menyertakan `database/` (`schema.sql` dan `migrations/`), `scripts/buat-admin.mjs`, `package.json`, `.env.example`, serta `tmp/restart.txt` ke dalam `rohkris-build.zip`.
+     - Memperbarui `README.md` dengan dokumentasi **Arsitektur Isolasi 5 Lapis (Zero-Interference)** untuk cPanel multi-website, panduan migrasi E-Tiket QR (`database/migrations/2026-11-e-tiket-qr.sql`), serta menghapus sisa penanda merge conflict di akhir dokumen.
+  3. **Verifikasi, Build Produksi, & Publikasi GitHub:**
+     - Menjalankan `npm run typecheck`, `npm run lint`, `npm test` (122 unit test lulus 100%), dan `npm run build` (`next build --webpack`).
+     - Menjalankan `powershell scripts/pack-build.ps1` untuk menghasilkan paket siap unggah `rohkris-build.zip`.
+     - Memastikan tidak ada berkas kredensial (`.env.local`, `kredensial_hosting.txt`) yang terlacak Git, lalu melakukan commit dan push ke `origin main`.
+* **Impact:**
+  - Repository GitHub dan struktur proyek jauh lebih bersih, ringan (bebas berkas duplikat/usang >1.3 MB di Git dan >23 MB arsip lama di lokal), serta bebas dari kebocoran kredensial.
+  - Paket `rohkris-build.zip` siap diunggah langsung ke folder aplikasi mandiri (`/home/<akun>/rohkris`) di cPanel dengan jaminan isolasi penuh tanpa mengganggu website lain di akun hosting yang sama.

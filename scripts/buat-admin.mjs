@@ -1,9 +1,9 @@
-#!/usr/bin/env node
+// File: scripts/buat-admin.mjs
 /**
  * Membuat (atau mengatur ulang kata sandi) akun admin langsung di database.
  *
  * Dipakai untuk admin PERTAMA, atau bila semua super admin lupa kata sandi.
- * Admin berikutnya cukup ditambahkan dari panel → Kelola Admin.
+ * Admin berikutnya cukup ditambahkan dari panel -> Kelola Admin.
  *
  * Pemakaian (dari folder aplikasi, env database harus sudah terisi):
  *   npm run admin:buat
@@ -18,7 +18,10 @@ import { randomBytes, randomUUID, scrypt } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { stdin, stdout } from "node:process";
 
-import mysql from "mysql2/promise";
+const mysqlModule = await import("mysql2/promise").catch(
+  () => import("../.next/standalone/node_modules/mysql2/promise.js"),
+);
+const mysql = mysqlModule.default ?? mysqlModule;
 
 // --- Muat .env.local / .env (tanpa dependensi tambahan) ------------------
 for (const berkas of [".env.local", ".env"]) {
@@ -44,8 +47,8 @@ function konfigurasiDatabase() {
   const { DATABASE_HOST, DATABASE_USER, DATABASE_NAME } = process.env;
   if (!DATABASE_HOST || !DATABASE_USER || !DATABASE_NAME) {
     console.error(
-      "✗ Konfigurasi database belum lengkap. Isi DATABASE_HOST, DATABASE_USER, " +
-        "DATABASE_PASSWORD, DATABASE_NAME di .env.local terlebih dahulu.",
+      "[GAGAL] Konfigurasi database belum lengkap. Isi DATABASE_HOST, DATABASE_USER, " +
+        "DATABASE_PASSWORD, DATABASE_NAME di .env.local atau Environment Variables terlebih dahulu.",
     );
     process.exit(1);
   }
@@ -151,22 +154,22 @@ const email = (await tanya("Email admin        : ")).trim().toLowerCase();
 const nama = (await tanya("Nama tampilan      : ")).trim();
 
 if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-  console.error("✗ Email tidak valid.");
+  console.error("[GAGAL] Email tidak valid.");
   process.exit(1);
 }
 if (nama.length < 1 || nama.length > 120) {
-  console.error("✗ Nama tampilan wajib diisi (maksimal 120 karakter).");
+  console.error("[GAGAL] Nama tampilan wajib diisi (maksimal 120 karakter).");
   process.exit(1);
 }
 
 const sandi = await tanya("Kata sandi (min 10): ", true);
 const ulang = await tanya("Ulangi kata sandi  : ", true);
 if (sandi.length < 10) {
-  console.error("✗ Kata sandi minimal 10 karakter.");
+  console.error("[GAGAL] Kata sandi minimal 10 karakter.");
   process.exit(1);
 }
 if (sandi !== ulang) {
-  console.error("✗ Kata sandi tidak sama.");
+  console.error("[GAGAL] Kata sandi tidak sama.");
   process.exit(1);
 }
 
@@ -188,18 +191,19 @@ try {
     );
     // Keluarkan semua sesi lama akun ini.
     await koneksi.query("DELETE FROM admin_sessions WHERE admin_id = ?", [ada[0].id]);
-    console.log(`\n✓ Akun ${email} diperbarui: kata sandi baru, peran super admin, status aktif.`);
+    console.log(`\n[BERHASIL] Akun ${email} diperbarui: kata sandi baru, peran super admin, status aktif.`);
   } else {
     await koneksi.query(
       "INSERT INTO admin_users (id, email, password_hash, role, display_name, is_active) VALUES (?, ?, ?, 'super_admin', ?, 1)",
       [randomUUID(), email, hash, nama],
     );
-    console.log(`\n✓ Super admin ${email} berhasil dibuat.`);
+    console.log(`\n[BERHASIL] Super admin ${email} berhasil dibuat.`);
   }
-  console.log("  Masuk melalui /admin/login.\n");
+  console.log("  Masuk melalui /admin/login?key=<ADMIN_SECRET_KEY>.\n");
 } catch (error) {
-  console.error("✗ Gagal menyimpan ke database:", error.message);
+  console.error("[GAGAL] Gagal menyimpan ke database:", error.message);
   process.exitCode = 1;
 } finally {
   await koneksi.end();
 }
+

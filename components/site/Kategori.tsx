@@ -1,4 +1,5 @@
-import Link from "next/link";
+// File: components/site/Kategori.tsx
+
 import type { ComponentType, SVGProps } from "react";
 
 import {
@@ -46,36 +47,3 @@ export function Tag({ tone, children, className }: { tone: TagTone; children: Re
   );
 }
 
-/** Kartu kategori — ikon garis besar, nama, dan keterangan; menaut ke filter kegiatan. */
-export function KategoriCard({
-  kategori,
-  jumlah,
-  aktif = false,
-}: {
-  kategori: EventCategory;
-  /** Jumlah kegiatan pada kategori ini; null bila data belum tersedia. */
-  jumlah?: number | null;
-  aktif?: boolean;
-}) {
-  const { Icon, deskripsi } = KATEGORI_INFO[kategori];
-
-  return (
-    <Link
-      href={`/kegiatan?kategori=${encodeURIComponent(kategori)}`}
-      aria-current={aktif ? "true" : undefined}
-      className={cn(
-        "card-interactive relative flex h-full min-h-[10.5rem] flex-col justify-between rounded-card border bg-white p-5",
-        // Kartu aktif mempertahankan tepi gelapnya saat hover (card-interactive memudarkannya).
-        aktif ? "border-navy-950 shadow-soft hover:border-navy-950!" : "border-navy-200/80",
-      )}
-    >
-      <Icon className="size-11 shrink-0 text-navy-950" strokeWidth={1.4} />
-      <div className="mt-6">
-        <p className="text-lg font-medium leading-tight tracking-heading text-navy-950">{kategori}</p>
-        <p className="mt-1 text-[0.8rem] text-navy-500 line-clamp-2">
-          {typeof jumlah === "number" ? `${jumlah} kegiatan` : deskripsi}
-        </p>
-      </div>
-    </Link>
-  );
-}

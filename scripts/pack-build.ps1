@@ -1,5 +1,5 @@
 # File: scripts/pack-build.ps1
-# Skrip pengemasan paket standalone build untuk hosting cPanel
+# Skrip pengemasan paket standalone build terisolasi untuk hosting Linux cPanel
 
 $ErrorActionPreference = "Stop"
 
@@ -7,6 +7,7 @@ $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $standaloneDir = Join-Path $projectRoot ".next\standalone"
 $staticSource = Join-Path $projectRoot ".next\static"
 $publicSource = Join-Path $projectRoot "public"
+$tmpDir = Join-Path $projectRoot "tmp"
 $zipOutput = Join-Path $projectRoot "rohkris-build.zip"
 
 if (-not (Test-Path $standaloneDir)) {
@@ -34,14 +35,33 @@ if (Test-Path $publicSource) {
     Copy-Item -Recurse -Force (Join-Path $publicSource "*") $standalonePublic
 }
 
-# 3. Bersihkan berkas sensitif atau tidak perlu dari .next/standalone bila ada
+# 3. Normalisasi separator path Windows (\) ke POSIX Linux (/) pada manifest standalone
+$requiredFilesJson = Join-Path $standaloneDir ".next\required-server-files.json"
+if (Test-Path $requiredFilesJson) {
+    $rawJson = [System.IO.File]::ReadAllText($requiredFilesJson)
+    $rawJson = $rawJson.Replace("C:\\Best Project\\Rohkris", ".")
+    $rawJson = $rawJson.Replace(".next\\server\\", ".next/server/")
+    $rawJson = $rawJson.Replace(".next\\", ".next/")
+    $rawJson = $rawJson.Replace(".next/server\\", ".next/server/")
+    [System.IO.File]::WriteAllText($requiredFilesJson, $rawJson)
+}
+
+$serverJs = Join-Path $standaloneDir "server.js"
+if (Test-Path $serverJs) {
+    $rawServer = [System.IO.File]::ReadAllText($serverJs)
+    $rawServer = $rawServer.Replace("C:\\Best Project\\Rohkris", ".")
+    [System.IO.File]::WriteAllText($serverJs, $rawServer)
+}
+
+# 4. Bersihkan berkas sensitif atau tidak perlu dari .next/standalone bila ada
 $excludePatterns = @(
     ".env*",
     "kredensial_hosting.txt",
     "storage",
     "tests",
     "Rohkris_Pelita_Nusantara_Docs",
-    "app\api"
+    "app\api",
+    "*.zip"
 )
 
 foreach ($pattern in $excludePatterns) {
@@ -51,19 +71,29 @@ foreach ($pattern in $excludePatterns) {
     }
 }
 
-# 4. Hapus arsip zip lama bila sudah ada
+# 5. Siapkan tmp/restart.txt untuk trigger reload LiteSpeed / Phusion Passenger cPanel
+if (-not (Test-Path $tmpDir)) {
+    New-Item -ItemType Directory -Path $tmpDir -Force | Out-Null
+}
+$restartTxt = Join-Path $tmpDir "restart.txt"
+[System.IO.File]::WriteAllText($restartTxt, "$([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())`n")
+
+# 6. Hapus arsip zip lama bila sudah ada
 if (Test-Path $zipOutput) {
     Remove-Item -Force $zipOutput
 }
 
-# 5. Buat file zip menggunakan tar.exe bawaan Windows (menghasilkan path ber-slash maju '/')
-Write-Host "Mengompresi .next/standalone dan public menggunakan tar.exe..."
+# 7. Buat file zip menggunakan tar.exe bawaan Windows (menghasilkan path ber-slash maju '/')
+Write-Host "Mengompresi paket deployment terisolasi menggunakan tar.exe..."
 Push-Location $projectRoot
 try {
-    tar.exe -a -c -f "rohkris-build.zip" .next/standalone public
+    tar.exe -a -c -f "rohkris-build.zip" .next/standalone public database scripts/buat-admin.mjs package.json .env.example tmp/restart.txt
 }
 finally {
     Pop-Location
+    if (Test-Path $tmpDir) {
+        Remove-Item -Recurse -Force $tmpDir -ErrorAction SilentlyContinue
+    }
 }
 
 if (-not (Test-Path $zipOutput)) {
@@ -74,3 +104,4 @@ if (-not (Test-Path $zipOutput)) {
 $file = Get-Item $zipOutput
 $sizeMb = [math]::Round($file.Length / 1MB, 2)
 Write-Host "Paket build berhasil dibuat: $($file.Name) ($sizeMb MB)"
+
