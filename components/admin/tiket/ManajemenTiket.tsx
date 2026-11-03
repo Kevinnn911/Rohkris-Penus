@@ -3,7 +3,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 
 import { AksiUnduhTiket } from "@/components/tiket/AksiUnduhTiket";
 import { KartuETiket } from "@/components/tiket/KartuETiket";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import {
   IconAlert,
   IconCheck,
+  IconClose,
   IconCopy,
   IconEye,
   IconFilter,
@@ -30,14 +31,22 @@ import type { TicketWithBenefits } from "@/lib/db/types";
 export function ManajemenTiket({
   eventId,
   eventTitle,
+  eventSummary,
   eventDate,
   eventLocation,
+  bannerUrl,
+  price,
+  whatsappGroupUrl,
   tickets: initialTickets,
 }: {
   eventId: string;
   eventTitle: string;
+  eventSummary?: string | null;
   eventDate: string | null;
   eventLocation: string | null;
+  bannerUrl?: string | null;
+  price?: string | null;
+  whatsappGroupUrl?: string | null;
   tickets: TicketWithBenefits[];
 }) {
   const [tickets, setTickets] = useState(initialTickets);
@@ -50,6 +59,17 @@ export function ManajemenTiket({
 
   const [pending, startTransition] = useTransition();
   const [notif, setNotif] = useState<{ ok: boolean; message: string } | null>(null);
+
+  useEffect(() => {
+    if (!selectedTicket) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setSelectedTicket(null);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selectedTicket]);
 
   // Filter daftar tiket
   const filteredTickets = useMemo(() => {
@@ -392,12 +412,20 @@ export function ManajemenTiket({
         <div
           role="dialog"
           aria-modal="true"
+          aria-labelledby="judul-modal-tiket"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setSelectedTicket(null);
+            }
+          }}
           className="fixed inset-0 z-50 flex items-center justify-center bg-navy-950/60 p-4 backdrop-blur-sm"
         >
           <div className="relative max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-navy-100 pb-4">
+            <div className="flex items-center justify-between border-b border-navy-100 pb-4 print:hidden">
               <div>
-                <h3 className="text-lg font-bold text-navy-950">Tiket Cadangan Server</h3>
+                <h3 id="judul-modal-tiket" className="text-lg font-bold text-navy-950">
+                  Tiket Cadangan Server
+                </h3>
                 <p className="text-xs text-navy-600">
                   Digunakan bila e-tiket peserta hilang atau tidak dapat dibuka di gawai peserta.
                 </p>
@@ -408,7 +436,7 @@ export function ManajemenTiket({
                 className="rounded-full p-2 text-navy-400 hover:bg-navy-100 hover:text-navy-950"
               >
                 <span className="sr-only">Tutup modal</span>
-                ✕
+                <IconClose className="size-5" />
               </button>
             </div>
 
@@ -423,9 +451,16 @@ export function ManajemenTiket({
                     ticketCode={selectedTicket.ticket_code}
                     attendeeName={selectedTicket.attendee_name}
                     attendeeEmail={selectedTicket.attendee_email}
+                    attendeePhone={selectedTicket.attendee_phone}
+                    attendeeOrg={selectedTicket.attendee_org}
                     eventTitle={eventTitle}
+                    eventSummary={eventSummary}
                     eventDate={eventDate}
                     eventLocation={eventLocation}
+                    bannerUrl={bannerUrl}
+                    price={price}
+                    orderId={selectedTicket.response_id}
+                    whatsappGroupUrl={whatsappGroupUrl}
                     checkinStatus={selectedTicket.checkin_status}
                     benefits={selectedTicket.benefits.map((b) => ({
                       key: b.benefit_key,
@@ -439,9 +474,16 @@ export function ManajemenTiket({
                     <AksiUnduhTiket
                       ticketCode={selectedTicket.ticket_code}
                       attendeeName={selectedTicket.attendee_name}
+                      attendeeEmail={selectedTicket.attendee_email}
+                      attendeePhone={selectedTicket.attendee_phone}
+                      attendeeOrg={selectedTicket.attendee_org}
                       eventTitle={eventTitle}
+                      eventSummary={eventSummary}
                       eventDate={eventDate}
                       eventLocation={eventLocation}
+                      bannerUrl={bannerUrl}
+                      price={price}
+                      orderId={selectedTicket.response_id}
                       benefits={selectedTicket.benefits.map((b) => ({
                         key: b.benefit_key,
                         name: b.benefit_name,
@@ -453,7 +495,7 @@ export function ManajemenTiket({
               )}
 
               {/* Tombol Aksi Cepat Panitia */}
-              <div className="rounded-2xl border border-navy-100 bg-navy-50/60 p-4 space-y-3">
+              <div className="rounded-2xl border border-navy-100 bg-navy-50/60 p-4 space-y-3 print:hidden">
                 <p className="text-xs font-semibold uppercase tracking-wider text-navy-600">Aksi Panitia Langsung</p>
                 <div className="flex flex-wrap gap-2">
                   {selectedTicket.checkin_status === "unattended" ? (

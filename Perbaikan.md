@@ -199,3 +199,63 @@
   1. Memeriksa apakah properti `rest.value !== undefined` (`terkontrol`) di dalam `TextField`.
   2. Hanya menyetel `defaultValue={defaultValue ?? ""}` apabila `rest.value === undefined` (`defaultValue={terkontrol ? undefined : (defaultValue ?? "")}`), sehingga input terkontrol hanya menerima `value` dan input tak-terkontrol hanya menerima `defaultValue`.
 * **Target Deadline:** Selesai (3 November 2026)
+
+## [HIGH] Celah Pemindaian Tiket Lintas Kegiatan (Cross-Event Ticket Scan) & Verifikasi HMAC Signature QR
+
+* **Priority:** HIGH
+* **Location:** `lib/actions/scan-admin.ts`, `lib/tickets/ticket-code.ts`, `components/admin/tiket/PindaiTiket.tsx`
+* **Severity:** High (Security & Business Logic Defect)
+* **Status:** Resolved (Production Ready)
+* **Root Cause:**
+  1. Fungsi `periksaKodeTiket(scannedText)` tidak menerima maupun memvalidasi parameter `expectedEventId`, dan komponen `PindaiTiket` tidak mengirimkan `eventId` saat memanggil `periksaKodeTiket`. Akibatnya, tiket dari Kegiatan A yang dipindai di halaman pemindai Kegiatan B tetap dinyatakan valid.
+  2. Meskipun payload QR menyertakan HMAC SHA-256 signature (`ROHKRIS:TICKET:<code>:<sig>`), fungsi `periksaKodeTiket` sebelumnya hanya mengekstrak `<code>` melalui `parseScannedTicketCode` tanpa memverifikasi kecocokan `<sig>`.
+* **Solution:**
+  1. Menambahkan fungsi `verifyScannedQrSignature(scannedText)` di `lib/tickets/ticket-code.ts` menggunakan perbandingan konstanta waktu (`timingSafeEqual`) terhadap `signTicketCode(code)` untuk menolak payload QR yang dimodifikasi atau memiliki signature tidak valid.
+  2. Memperbarui `periksaKodeTiket(scannedText, expectedEventId)` di `lib/actions/scan-admin.ts` dan `PindaiTiket.tsx` untuk memvalidasi `ticket.event_id === expectedEventId` dan menampilkan pesan penolakan spesifik apabila tiket berasal dari kegiatan lain.
+* **Target Deadline:** Selesai (3 November 2026)
+
+## [HIGH] Mode Penukaran Tiket "Semua Sekaligus" (`all_in_one`) Tidak Diterapkan saat Pemindaian QR
+
+* **Priority:** HIGH
+* **Location:** `lib/actions/scan-admin.ts`, `app/(admin-protected)/admin/kegiatan/[id]/scan/page.tsx`, `components/admin/tiket/PindaiTiket.tsx`
+* **Severity:** High (Functional Defect)
+* **Status:** Resolved (Production Ready)
+* **Root Cause:**
+  1. Pengaturan `ticket_redemption_mode` (`"flexible"` vs `"all_in_one"`) telah disimpan di tabel `event_forms`, tetapi tidak dibaca oleh `periksaKodeTiket` maupun diteruskan ke halaman pemindai `/admin/kegiatan/[id]/scan`.
+  2. Akibatnya, meskipun admin memilih mode "Semua Sekaligus (Otomatis)", pemindai tetap mengharuskan panitia menekan tombol konfirmasi secara manual.
+* **Solution:**
+  1. Membaca `ticket_redemption_mode` dari `event_forms` di dalam `periksaKodeTiket` dan meneruskannya ke `PindaiTiket` dari `scan/page.tsx`.
+  2. Apabila `redemptionMode === "all_in_one"` dan tiket belum sepenuhnya digunakan, `periksaKodeTiket` langsung mengeksekusi `claimAll(ticket.id, auth.admin.id)` secara atomik, mengembalikan flag `autoConfirmed: true`, dan menampilkan notifikasi konfirmasi otomatis beserta badge mode aktif di antarmuka pemindai.
+* **Target Deadline:** Selesai (3 November 2026)
+
+## [HIGH] Risiko Kegagalan Transaksi Database Akibat Nama Peserta > 120 Karakter atau Kunci Kupon Duplikat
+
+* **Priority:** HIGH
+* **Location:** `lib/tickets/ticket-code.ts`, `lib/tickets/data.ts`, `lib/forms/definition-schema.ts`, `lib/actions/formulir-publik.ts`
+* **Severity:** High (Database Transaction Rollback Risk)
+* **Status:** Resolved (Production Ready)
+* **Root Cause:**
+  1. Kolom `event_tickets.attendee_name` bertipe `VARCHAR(120)`, sedangkan pertanyaan `short_text` mengizinkan hingga 500 karakter (`FORM_LIMITS.shortTextMax`). Nama > 120 karakter menyebabkan galat MySQL `Data too long for column 'attendee_name'`.
+  2. Tabel `ticket_benefits` memiliki constraint `UNIQUE KEY (ticket_id, benefit_key)` dengan `benefit_key VARCHAR(64)` dan `benefit_name VARCHAR(100)`. Jika admin menginput kunci kupon kembar, `issueTicketInTx` melempar `ER_DUP_ENTRY` yang disalahartikan oleh `kirimFormulir` sebagai duplikasi email peserta.
+* **Solution:**
+  1. Membatasi hasil `resolveAttendeeName` dan `issueTicketInTx` maksimal 120 karakter (`MAX_ATTENDEE_NAME_LENGTH`).
+  2. Menambahkan validasi panjang maksimum (`key <= 64`, `name <= 100`) dan keunikan `key` (case-insensitive) pada `formSettingsSchema`, `parseBenefitsConfig`, serta `issueTicketInTx`.
+  3. Memperketat penanganan `ER_DUP_ENTRY` di `kirimFormulir` agar hanya menampilkan pesan email terdaftar apabila galat berasal dari indeks `form_responses_dedupe_uq`.
+* **Target Deadline:** Selesai (3 November 2026)
+
+## [MEDIUM] E-Tiket Tidak Ditampilkan Kembali & Data Tiket Cadangan Admin Kurang Lengkap
+
+* **Priority:** MEDIUM
+* **Location:** `lib/actions/formulir-publik.ts` (`ubahJawaban`), `lib/tickets/data.ts` (`getEventTickets`), `app/(admin-protected)/admin/kegiatan/[id]/tiket/page.tsx`, `components/admin/tiket/ManajemenTiket.tsx`, `components/tiket/AksiUnduhTiket.tsx`, `app/globals.css`
+* **Severity:** Medium (UX & Data Completeness Defect)
+* **Status:** Resolved (Production Ready)
+* **Root Cause:**
+  1. Aksi `ubahJawaban` memperbarui nama peserta di `event_tickets`, tetapi tidak mengembalikan `ticket: ticketPayload` ke `LayarSelesai` maupun melampirkannya pada email konfirmasi perubahan.
+  2. Modal "Tiket Cadangan Server" di `ManajemenTiket.tsx` belum meneruskan `attendeeEmail`, `attendeePhone`, `attendeeOrg`, `eventSummary`, `bannerUrl`, `price`, dan `orderId` ke `AksiUnduhTiket`, serta aksi `kirimUlangEmailTiket` mengirimkan definisi dan jawaban kosong.
+  3. Teks panjang pada kanvas PNG `AksiUnduhTiket.tsx` belum memiliki pembatas lebar (`fitText`), dan fitur `window.print()` mencetak elemen navigasi halaman di luar kartu tiket.
+* **Solution:**
+  1. Memperbarui `ubahJawaban` agar memuat tiket peserta (atau menerbitkannya bila belum ada) dan menyertakan `ticketPayload` pada respons serta email konfirmasi.
+  2. Memperkaya `getEventTickets` dan `kirimUlangEmailTiket` dengan data jawaban `form_responses` serta meneruskan seluruh metadata ke `KartuETiket` dan `AksiUnduhTiket`.
+  3. Menambahkan fungsi `fitText` pada kanvas `AksiUnduhTiket.tsx`, aturan `@media print` khusus `#e-tiket-card` di `app/globals.css`, serta dukungan tombol `Escape` dan penggantian simbol `✕` dengan `<IconClose />` pada modal admin.
+* **Target Deadline:** Selesai (3 November 2026)
+

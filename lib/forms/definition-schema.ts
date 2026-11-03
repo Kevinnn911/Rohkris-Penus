@@ -363,8 +363,16 @@ export const formSettingsSchema = z
     ticketBenefitsConfig: z
       .array(
         z.object({
-          key: z.string().trim().min(1, { error: "Kunci kupon wajib diisi." }),
-          name: z.string().trim().min(1, { error: "Nama kupon wajib diisi." }),
+          key: z
+            .string()
+            .trim()
+            .min(1, { error: "Kunci kupon wajib diisi." })
+            .max(64, { error: "Kunci kupon maksimal 64 karakter." }),
+          name: z
+            .string()
+            .trim()
+            .min(1, { error: "Nama kupon wajib diisi." })
+            .max(100, { error: "Nama kupon maksimal 100 karakter." }),
         }),
       )
       .default([{ key: "konsumsi", name: "Kupon Konsumsi" }]),
@@ -384,6 +392,18 @@ export const formSettingsSchema = z
         path: ["sendConfirmation"],
       });
     }
+    const seenBenefitKeys = new Set<string>();
+    s.ticketBenefitsConfig.forEach((b, idx) => {
+      const k = b.key.trim().toLowerCase();
+      if (seenBenefitKeys.has(k)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Kunci kupon “${b.key}” tidak boleh sama.`,
+          path: ["ticketBenefitsConfig", idx, "key"],
+        });
+      }
+      seenBenefitKeys.add(k);
+    });
   });
 
 export const DEFAULT_CONSENT_TEXT =

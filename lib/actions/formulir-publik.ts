@@ -34,6 +34,7 @@ import { FORM_LIMITS, allQuestions, type FormDefinition, type FileUploadQuestion
 import { isValidEmail, normalizeEmail, validateSubmission } from "@/lib/forms/validate-answers";
 import { generateQrDataUrl } from "@/lib/tickets/qr";
 import {
+  getTicketByResponseId,
   issueTicketInTx,
   parseBenefitsConfig,
   resolveAttendeeName,
@@ -424,7 +425,7 @@ export async function kirimFormulir(eventId: string, formData: FormData): Promis
   } catch (error) {
     await hapusBerkasFormulir(kunci);
     const e = error as { code?: string; message?: string };
-    if (e.code === "ER_DUP_ENTRY") {
+    if (e.code === "ER_DUP_ENTRY" && (!e.message || e.message.includes("form_responses_dedupe_uq"))) {
       return { ok: false, message: "Email ini sudah mengirim jawaban untuk formulir ini.", errors: { _email: "Email ini sudah terdaftar." } };
     }
     console.error("Gagal menyimpan respons formulir:", e.code ?? "", e.message ?? "");
@@ -604,13 +605,28 @@ export async function ubahJawaban(token: string, formData: FormData): Promise<Ki
         );
       }
 
-      // Perbarui nama di tiket bila pertanyaan nama diedit
+      // Perbarui nama di tiket bila pertanyaan nama diedit (atau terbitkan jika belum ada)
       if (form.ticket_enabled !== false) {
         const attendeeNameBaru = resolveAttendeeName(answers, definition, form.ticket_name_question_id);
-        await tx.execute(
-          "UPDATE event_tickets SET attendee_name = ? WHERE response_id = ?",
-          [attendeeNameBaru, response.id],
+        const existingTicket = await tx.query<{ id: string }>(
+          "SELECT id FROM event_tickets WHERE response_id = ? LIMIT 1",
+          [response.id],
         );
+        if (existingTicket.length > 0) {
+          await tx.execute(
+            "UPDATE event_tickets SET attendee_name = ? WHERE response_id = ?",
+            [attendeeNameBaru, response.id],
+          );
+        } else {
+          await issueTicketInTx(tx, {
+            responseId: response.id,
+            eventId: event.id,
+            eventSlug: event.slug,
+            attendeeName: attendeeNameBaru,
+            attendeeEmail: response.respondent_email,
+            benefits: parseBenefitsConfig(form.ticket_benefits_config),
+          });
+        }
       }
     });
   } catch (error) {
@@ -625,6 +641,41 @@ export async function ubahJawaban(token: string, formData: FormData): Promise<Ki
   await hapusBerkasFormulir(dibuang.map((f) => f.storage_key));
   await recordRateEvent(form.id, "edit", ip).catch(() => undefined);
 
+  let ticketPayload: TicketPayload | null = null;
+  if (form.ticket_enabled !== false) {
+    try {
+      const dbTicket = await getTicketByResponseId(response.id);
+      if (dbTicket) {
+        const qrDataUrl = await generateQrDataUrl(dbTicket.ticket_code);
+        const attendeePhone = resolveAttendeePhone(answers, definition);
+        const attendeeOrg = resolveAttendeeOrg(answers, definition);
+        ticketPayload = {
+          ticketCode: dbTicket.ticket_code,
+          attendeeName: dbTicket.attendee_name,
+          attendeeEmail: response.respondent_email,
+          attendeePhone,
+          attendeeOrg,
+          qrDataUrl,
+          benefits: dbTicket.benefits.map((b) => ({ key: b.benefit_key, name: b.benefit_name })),
+          eventTitle: event.title,
+          eventSummary: event.summary,
+          eventDate: formatRentangKegiatan(event.start_at, event.end_at) ?? formatTanggal(event.start_at),
+          eventLocation: event.location,
+          bannerUrl: event.cover_image_url,
+          price: event.cost_info || "Gratis",
+          orderId: response.id,
+          whatsappGroupUrl:
+            event.registration_url && /chat\.whatsapp\.com/i.test(event.registration_url)
+              ? event.registration_url
+              : null,
+        };
+      }
+    } catch (qrErr) {
+      console.error("Gagal memuat QR data URL tiket saat ubah jawaban:", (qrErr as Error).message);
+    }
+  }
+
+  const editPath = `/kegiatan/${event.slug}/daftar/ubah/${token}`;
   if (kirimEmail && response.respondent_email && response.email_norm) {
     const namaBerkas = new Map<string, { id: string; name: string }>();
     for (const f of ditemukan.files) if (tetap.has(f.id)) namaBerkas.set(f.id, { id: f.id, name: f.original_name });
@@ -632,14 +683,16 @@ export async function ubahJawaban(token: string, formData: FormData): Promise<Ki
     jadwalkanEmail({
       responseId: response.id, formId: form.id, ip, to: response.respondent_email, emailNorm: response.email_norm,
       event, form, definition, answers, files: namaBerkas,
-      editPath: `/kegiatan/${event.slug}/daftar/ubah/${token}`, edited: true,
+      editPath, edited: true,
+      ticket: ticketPayload,
     });
   }
 
   return {
     ok: true,
     message: "Perubahan jawaban Anda sudah disimpan.",
-    editPath: `/kegiatan/${event.slug}/daftar/ubah/${token}`,
+    editPath,
     emailQueued: kirimEmail,
+    ticket: ticketPayload,
   };
 }

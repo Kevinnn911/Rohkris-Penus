@@ -39,6 +39,10 @@ export default async function TiketKegiatanPage({
 
   const tickets = await getEventTickets(id);
   const eventDate = formatRentangKegiatan(event.start_at, event.end_at) ?? formatTanggal(event.start_at);
+  const whatsappGroupUrl =
+    event.registration_url && /chat\.whatsapp\.com/i.test(event.registration_url)
+      ? event.registration_url
+      : null;
 
   return (
     <div className="space-y-8">
@@ -51,8 +55,12 @@ export default async function TiketKegiatanPage({
       <ManajemenTiket
         eventId={id}
         eventTitle={event.title}
+        eventSummary={event.summary}
         eventDate={eventDate}
         eventLocation={event.location}
+        bannerUrl={event.cover_image_url}
+        price={event.cost_info || "Gratis"}
+        whatsappGroupUrl={whatsappGroupUrl}
         tickets={tickets}
       />
     </div>

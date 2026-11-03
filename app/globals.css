@@ -389,3 +389,37 @@ body {
   max-width: 100%;
   height: auto;
 }
+
+/* Pengaturan cetak / Simpan PDF khusus E-Tiket (#e-tiket-card) */
+@media print {
+  body:has(#e-tiket-card) {
+    background-color: #ffffff !important;
+  }
+  body:has(#e-tiket-card) header,
+  body:has(#e-tiket-card) footer,
+  body:has(#e-tiket-card) nav,
+  body:has(#e-tiket-card) aside {
+    display: none !important;
+  }
+  body:has(#e-tiket-card) [role="dialog"] {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    backdrop-filter: none !important;
+  }
+  body:has(#e-tiket-card) [role="dialog"] > div {
+    max-height: none !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+  #e-tiket-card,
+  #e-tiket-card * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  #e-tiket-card {
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+}

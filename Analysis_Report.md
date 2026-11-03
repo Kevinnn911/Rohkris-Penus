@@ -565,3 +565,32 @@
 * **Impact:**
   - Desain e-tiket kini tampak sangat profesional, bersih, berwibawa, dan otentik layaknya e-tiket konferensi/pelatihan resmi skala nasional, bebas dari kesan desain generik kecerdasan buatan (*AI slop*).
   - Peserta mendapatkan seluruh informasi esensial (jadwal, lokasi, syarat, peraturan, grup WhatsApp) langsung di dalam satu lembar e-tiket baik di web, gambar unduhan, maupun surel.
+
+## [DONE] Audit Menyeluruh dan Perbaikan Integritas Sistem E-Tiket, Pemindai QR, serta Formulir Pendaftaran
+
+* **Status:** Selesai (Production Ready)
+* **Feature:** Pengujian mendalam (*deep audit*) dan penyempurnaan menyeluruh pada keamanan kriptografi QR, isolasi pemindaian lintas kegiatan, eksekusi mode penukaran `all_in_one`, ketahanan skema database, kelengkapan data tiket cadangan server, dan pencetakan PDF.
+* **Technical Implementation:**
+  1. **Verifikasi HMAC Signature & Pencegahan Scan Lintas Kegiatan (`lib/tickets/ticket-code.ts`, `lib/actions/scan-admin.ts`, `components/admin/tiket/PindaiTiket.tsx`):**
+     - Menambahkan fungsi `verifyScannedQrSignature(scannedText)` berbasis `timingSafeEqual` untuk memvalidasi tanda tangan HMAC SHA-256 pada payload QR `ROHKRIS:TICKET:<code>:<sig>` dan menolak QR yang dimanipulasi.
+     - Menambahkan validasi `expectedEventId` pada `periksaKodeTiket` dan meneruskan `eventId` dari `PindaiTiket` sehingga tiket dari kegiatan lain ditolak secara eksplisit.
+  2. **Implementasi Mode Penukaran "Semua Sekaligus" (`all_in_one`) (`lib/actions/scan-admin.ts`, `app/(admin-protected)/admin/kegiatan/[id]/scan/page.tsx`, `components/admin/tiket/PindaiTiket.tsx`):**
+     - Membaca `ticket_redemption_mode` dari tabel `event_forms` saat pemindaian berlangsung.
+     - Pada mode `all_in_one`, pemindaian pertama pada tiket valid otomatis mengeksekusi `claimAll(ticket.id, auth.admin.id)` untuk mengonfirmasi kehadiran beserta seluruh kupon sekaligus, menampilkan lencana mode aktif dan notifikasi konfirmasi otomatis.
+  3. **Ketahanan Transaksi Database terhadap Input Panjang & Duplikasi Kupon (`lib/tickets/ticket-code.ts`, `lib/tickets/data.ts`, `lib/forms/definition-schema.ts`, `lib/actions/formulir-publik.ts`):**
+     - Membatasi panjang nama peserta (`resolveAttendeeName` & `issueTicketInTx`) maksimal 120 karakter sesuai kolom `event_tickets.attendee_name VARCHAR(120)`.
+     - Menambahkan validasi keunikan `key` kupon (case-insensitive) serta batas panjang `key <= 64` dan `name <= 100` pada `formSettingsSchema`, `parseBenefitsConfig`, dan `issueTicketInTx`.
+     - Memperbaiki deteksi `ER_DUP_ENTRY` di `kirimFormulir` agar spesifik memeriksa constraint `form_responses_dedupe_uq`.
+  4. **Kelengkapan E-Tiket saat Ubah Jawaban & Tiket Cadangan Admin (`lib/actions/formulir-publik.ts`, `lib/tickets/data.ts`, `app/(admin-protected)/admin/kegiatan/[id]/tiket/page.tsx`, `components/admin/tiket/ManajemenTiket.tsx`):**
+     - Memperbarui `ubahJawaban` agar memuat (atau menerbitkan) E-Tiket peserta dan menyertakannya kembali pada layar selesai serta email konfirmasi perubahan.
+     - Memperkaya `getEventTickets` dengan ekstraksi `attendee_phone` dan `attendee_org` dari `form_responses.answers`, serta meneruskan metadata lengkap ke modal `Tiket Cadangan Server` dan `kirimUlangEmailTiket`.
+     - Menambahkan dukungan tutup modal dengan tombol `Escape`, klik latar belakang, `aria-labelledby`, serta mengganti simbol Unicode `✕` dengan `<IconClose />`.
+  5. **Penyempurnaan Kanvas PNG & Cetak PDF (`components/tiket/AksiUnduhTiket.tsx`, `components/tiket/KartuETiket.tsx`, `app/globals.css`):**
+     - Menambahkan fungsi `fitText` pada kanvas HTML5 untuk mencegah teks panjang meluber keluar batas horizontal maupun vertikal.
+     - Menambahkan aturan `@media print` khusus `#e-tiket-card` dengan `print-color-adjust: exact` agar latar gelap dan kontras QR tercetak sempurna tanpa elemen navigasi halaman.
+  6. **Verifikasi Kualitas:**
+     - Menambahkan pengujian unit baru di `tests/unit/ticket-core.test.ts` (total 122 pengujian pada 9 test suite lulus 100%).
+     - Lulus `npm run typecheck`, `npm run lint`, dan `npm run build` tanpa error maupun warning.
+* **Impact:**
+  - Seluruh alur pendaftaran, pengubahan jawaban, unduh PNG/cetak PDF, tiket cadangan admin, hingga pemindaian QR oleh panitia di lapangan berjalan konsisten, aman dari pemalsuan maupun salah kamar kegiatan, dan bebas dari risiko kegagalan transaksi database.
+

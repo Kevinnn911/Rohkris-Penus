@@ -115,40 +115,68 @@ export function AksiUnduhTiket({
         ctx.fillText("ROHANI KRISTEN (ROHKRIS)", 80, 165);
       }
 
+      const renderContext: CanvasRenderingContext2D = ctx;
+
+      function fitText(text: string, maxWidth: number): string {
+        if (renderContext.measureText(text).width <= maxWidth) return text;
+        let clipped = text;
+        while (
+          clipped.length > 0 &&
+          renderContext.measureText(`${clipped}...`).width > maxWidth
+        ) {
+          clipped = clipped.slice(0, -1);
+        }
+        return `${clipped}...`;
+      }
+
       // 3. Header Acara Terpusat
       ctx.textAlign = "center";
       ctx.fillStyle = "#ffffff";
       ctx.font = "bold 44px sans-serif";
 
-      // Word-wrap untuk judul acara
+      // Word-wrap untuk judul acara (maksimal 2 baris agar tata letak vertikal terjaga)
       const maxTitleWidth = width - 160;
-      const words = eventTitle.split(" ");
+      const words = eventTitle.split(/\s+/).filter(Boolean);
+      const titleLines: string[] = [];
       let currentLine = "";
-      let yTitle = yOffset + 70;
       for (const word of words) {
         const testLine = currentLine + (currentLine ? " " : "") + word;
-        if (ctx.measureText(testLine).width > maxTitleWidth) {
-          ctx.fillText(currentLine, width / 2, yTitle);
+        if (ctx.measureText(testLine).width > maxTitleWidth && currentLine) {
+          titleLines.push(currentLine);
           currentLine = word;
-          yTitle += 54;
         } else {
           currentLine = testLine;
         }
       }
-      ctx.fillText(currentLine, width / 2, yTitle);
+      if (currentLine) titleLines.push(currentLine);
+
+      let yTitle = yOffset + 70;
+      const maxLines = 2;
+      const renderedTitleLines =
+        titleLines.length > maxLines
+          ? [
+              ...titleLines.slice(0, maxLines - 1),
+              titleLines.slice(maxLines - 1).join(" "),
+            ]
+          : titleLines;
+
+      for (let i = 0; i < renderedTitleLines.length; i++) {
+        if (i > 0) yTitle += 54;
+        ctx.fillText(fitText(renderedTitleLines[i] ?? "", maxTitleWidth), width / 2, yTitle);
+      }
 
       if (eventSummary) {
         yTitle += 42;
         ctx.fillStyle = "#a1a1aa";
         ctx.font = "normal 26px sans-serif";
-        ctx.fillText(eventSummary, width / 2, yTitle);
+        ctx.fillText(fitText(eventSummary, maxTitleWidth), width / 2, yTitle);
       }
 
       if (eventDate) {
         yTitle += 38;
         ctx.fillStyle = "#a1a1aa";
         ctx.font = "normal 24px sans-serif";
-        ctx.fillText(eventDate, width / 2, yTitle);
+        ctx.fillText(fitText(eventDate, maxTitleWidth), width / 2, yTitle);
       }
 
       // 4. Kotak Kode QR Putih Bersih di Tengah
@@ -174,8 +202,6 @@ export function AksiUnduhTiket({
       // Kembalikan ke text-align left untuk bagian formulir
       ctx.textAlign = "left";
 
-      const renderContext: CanvasRenderingContext2D = ctx;
-
       // 5. Garis Pembatas
       let yCursor = qrBoxY + qrBoxSize + 45;
       function drawDivider(y: number) {
@@ -198,6 +224,7 @@ export function AksiUnduhTiket({
       yCursor += 38;
       const colLabelX = 80;
       const colValueX = 340;
+      const maxRowValueWidth = width - colValueX - 80;
 
       function drawRow(label: string, value: string, isBold = false) {
         renderContext.fillStyle = "#a1a1aa";
@@ -206,7 +233,7 @@ export function AksiUnduhTiket({
 
         renderContext.fillStyle = "#ffffff";
         renderContext.font = isBold ? "bold 24px sans-serif" : "normal 24px sans-serif";
-        renderContext.fillText(value, colValueX, yCursor);
+        renderContext.fillText(fitText(value, maxRowValueWidth), colValueX, yCursor);
         yCursor += 36;
       }
 
@@ -250,8 +277,8 @@ export function AksiUnduhTiket({
         ctx.fillText("Kupon:", colLabelX, yCursor);
 
         ctx.fillStyle = "#34d399";
-        const benefitNames = benefits.map((b) => b.name).join("  •  ");
-        ctx.fillText(benefitNames, colValueX, yCursor);
+        const benefitNames = benefits.map((b) => b.name).join("  |  ");
+        ctx.fillText(fitText(benefitNames, maxRowValueWidth), colValueX, yCursor);
         yCursor += 36;
       }
 
@@ -267,7 +294,11 @@ export function AksiUnduhTiket({
       yCursor += 38;
       ctx.fillStyle = "#ffffff";
       ctx.font = "normal 24px sans-serif";
-      ctx.fillText(eventLocation || "SMK Plus Pelita Nusantara, Cibinong, Bogor", 80, yCursor);
+      ctx.fillText(
+        fitText(eventLocation || "SMK Plus Pelita Nusantara, Cibinong, Bogor", width - 160),
+        80,
+        yCursor,
+      );
 
       yCursor += 30;
 
@@ -343,11 +374,11 @@ export function AksiUnduhTiket({
       ctx.fillStyle = "#a1a1aa";
       ctx.font = "normal 21px sans-serif";
       const dos = [
-        "• Menggunakan pakaian yang ditentukan oleh panitia (rapi dan sopan).",
-        "• Membuang sampah pada tempat yang telah disediakan.",
-        "• Membawa bukti pendaftaran e-tiket dan kartu identitas / kartu pelajar yang valid.",
-        "• Hadir di lokasi tepat waktu sesuai jadwal acara.",
-        "• Menjaga ketertiban, keamanan, dan kenyamanan seluruh peserta.",
+        "- Menggunakan pakaian yang ditentukan oleh panitia (rapi dan sopan).",
+        "- Membuang sampah pada tempat yang telah disediakan.",
+        "- Membawa bukti pendaftaran e-tiket dan kartu identitas / kartu pelajar yang valid.",
+        "- Hadir di lokasi tepat waktu sesuai jadwal acara.",
+        "- Menjaga ketertiban, keamanan, dan kenyamanan seluruh peserta.",
       ];
       for (const d of dos) {
         ctx.fillText(d, 80, yCursor);
@@ -363,11 +394,11 @@ export function AksiUnduhTiket({
       ctx.fillStyle = "#a1a1aa";
       ctx.font = "normal 21px sans-serif";
       const donts = [
-        "• Dilarang membawa hewan peliharaan.",
-        "• Dilarang membawa senjata tajam atau benda-benda berbahaya lainnya.",
-        "• Dilarang membawa dan mengonsumsi minuman keras atau obat-obatan terlarang.",
-        "• Dilarang merokok atau menggunakan vape di seluruh area acara.",
-        "• Dilarang membuang sampah sembarangan.",
+        "- Dilarang membawa hewan peliharaan.",
+        "- Dilarang membawa senjata tajam atau benda-benda berbahaya lainnya.",
+        "- Dilarang membawa dan mengonsumsi minuman keras atau obat-obatan terlarang.",
+        "- Dilarang merokok atau menggunakan vape di seluruh area acara.",
+        "- Dilarang membuang sampah sembarangan.",
       ];
       for (const d of donts) {
         ctx.fillText(d, 80, yCursor);
@@ -413,7 +444,7 @@ export function AksiUnduhTiket({
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-3">
+    <div className="flex flex-wrap items-center justify-center gap-3 print:hidden">
       <Button
         type="button"
         variant="primary"
@@ -430,7 +461,7 @@ export function AksiUnduhTiket({
         ) : (
           <>
             <IconDownload className="size-4" />
-            {mengunduh ? "Menyiapkan Gambar…" : "Download Tiket (Gambar)"}
+            {mengunduh ? "Menyiapkan Gambar..." : "Download Tiket (Gambar)"}
           </>
         )}
       </Button>

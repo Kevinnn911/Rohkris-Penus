@@ -2,9 +2,13 @@
 
 import { describe, expect, it } from "vitest";
 
+import { DEFAULT_FORM_SETTINGS, formSettingsSchema } from "@/lib/forms/definition-schema";
 import type { FormDefinition } from "@/lib/forms/types";
-import { generateQrDataUrl, generateQrSvg } from "@/lib/tickets/qr";
+import { buildQrPayload, generateQrDataUrl, generateQrSvg } from "@/lib/tickets/qr";
 import {
+  MAX_ATTENDEE_NAME_LENGTH,
+  MAX_BENEFIT_KEY_LENGTH,
+  MAX_BENEFIT_NAME_LENGTH,
   generateTicketCode,
   parseBenefitsConfig,
   parseScannedTicketCode,
@@ -12,6 +16,7 @@ import {
   resolveAttendeeOrg,
   resolveAttendeePhone,
   signTicketCode,
+  verifyScannedQrSignature,
 } from "@/lib/tickets/ticket-code";
 
 describe("Ticket Code & Security", () => {
@@ -32,6 +37,28 @@ describe("Ticket Code & Security", () => {
 
     const sigOther = signTicketCode("ROH-NATAL-999999");
     expect(sigOther).not.toBe(sig1);
+  });
+
+  it("memverifikasi HMAC signature pada payload QR dan menolak payload palsu", () => {
+    const code = "ROH-NATAL-7X9B2C";
+    const validPayload = buildQrPayload(code);
+    expect(verifyScannedQrSignature(validPayload)).toBe(true);
+
+    // Signature dipalsukan
+    expect(verifyScannedQrSignature(`ROHKRIS:TICKET:${code}:0000000000000000`)).toBe(false);
+
+    // Kode tiket diubah tetapi memakai signature tiket lain
+    const validSig = signTicketCode(code);
+    expect(verifyScannedQrSignature(`ROHKRIS:TICKET:ROH-NATAL-HACKED:${validSig}`)).toBe(false);
+
+    // Format QR tidak lengkap (tanpa signature)
+    expect(verifyScannedQrSignature(`ROHKRIS:TICKET:${code}`)).toBe(false);
+    expect(verifyScannedQrSignature(`ROHKRIS:TICKET:${code}:`)).toBe(false);
+
+    // Kode manual atau URL tetap diizinkan untuk diverifikasi di database
+    expect(verifyScannedQrSignature(code)).toBe(true);
+    expect(verifyScannedQrSignature(`https://rohkris.sch.id/tiket/${code}`)).toBe(true);
+    expect(verifyScannedQrSignature("")).toBe(false);
   });
 
   it("mengurai kode dari berbagai format scanner", () => {
@@ -61,22 +88,47 @@ describe("Ticket Code & Security", () => {
 });
 
 describe("Benefits Configuration & Attendee Name Resolution", () => {
-  it("mengurai konfigurasi kupon dari JSON atau fallback ke bawaan", () => {
+  it("mengurai konfigurasi kupon dari JSON, menghapus duplikat, dan membatasi panjang", () => {
     const customJson = JSON.stringify([
       { key: "konsumsi", name: "Kupon Konsumsi" },
+      { key: "KONSUMSI", name: "Duplikat Konsumsi" },
       { key: "souvenir", name: "Souvenir Kaos" },
+      { key: "k".repeat(100), name: "n".repeat(150) },
     ]);
     const parsed = parseBenefitsConfig(customJson);
-    expect(parsed).toHaveLength(2);
+    expect(parsed).toHaveLength(3);
+    expect(parsed[0]?.name).toBe("Kupon Konsumsi");
     expect(parsed[1]?.name).toBe("Souvenir Kaos");
+    expect(parsed[2]?.key).toHaveLength(MAX_BENEFIT_KEY_LENGTH);
+    expect(parsed[2]?.name).toHaveLength(MAX_BENEFIT_NAME_LENGTH);
 
-    // Fallback default jika null / invalid
+    // Fallback default jika null / invalid / item kosong
     expect(parseBenefitsConfig(null)).toEqual([{ key: "konsumsi", name: "Kupon Konsumsi" }]);
     expect(parseBenefitsConfig("invalid-json")).toEqual([{ key: "konsumsi", name: "Kupon Konsumsi" }]);
     expect(parseBenefitsConfig("[]")).toEqual([{ key: "konsumsi", name: "Kupon Konsumsi" }]);
+    expect(parseBenefitsConfig(JSON.stringify([{ key: " ", name: " " }]))).toEqual([
+      { key: "konsumsi", name: "Kupon Konsumsi" },
+    ]);
   });
 
-  it("mendeteksi nama peserta dari jawaban formulir", () => {
+  it("memvalidasi duplikasi dan batas panjang kunci kupon di formSettingsSchema", () => {
+    const dupResult = formSettingsSchema.safeParse({
+      ...DEFAULT_FORM_SETTINGS,
+      ticketBenefitsConfig: [
+        { key: "konsumsi", name: "Kupon Konsumsi" },
+        { key: "Konsumsi", name: "Kupon Makan Siang" },
+      ],
+    });
+    expect(dupResult.success).toBe(false);
+
+    const tooLongKeyResult = formSettingsSchema.safeParse({
+      ...DEFAULT_FORM_SETTINGS,
+      ticketBenefitsConfig: [{ key: "x".repeat(65), name: "Kupon" }],
+    });
+    expect(tooLongKeyResult.success).toBe(false);
+  });
+
+  it("mendeteksi nama peserta dari jawaban formulir dan memotong nama > 120 karakter", () => {
     const def: FormDefinition = {
       schemaVersion: 1,
       sections: [
@@ -103,6 +155,11 @@ describe("Benefits Configuration & Attendee Name Resolution", () => {
 
     // Menggunakan custom question id
     expect(resolveAttendeeName(answers, def, "q_kelas")).toBe("XII RPL 1");
+
+    // Memotong nama yang melebihi 120 karakter (batas VARCHAR(120) di database)
+    const namaPanjang = "A".repeat(250);
+    const resolvedPanjang = resolveAttendeeName({ q_nama_lengkap: namaPanjang }, def);
+    expect(resolvedPanjang).toHaveLength(MAX_ATTENDEE_NAME_LENGTH);
 
     // Fallback jika tidak ada pertanyaan bernama nama
     const defTanpaNama: FormDefinition = {

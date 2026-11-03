@@ -1,5 +1,6 @@
 // File: lib/tickets/data.ts
 
+import { readDefinition } from "@/lib/data/forms";
 import { newId, nowDb, query, queryOne } from "@/lib/db";
 import type {
   EventTicketRow,
@@ -7,8 +8,12 @@ import type {
   TicketBenefitRow,
   TicketWithBenefits,
 } from "@/lib/db/types";
+import type { StoredAnswers } from "@/lib/forms/types";
 import {
   DEFAULT_TICKET_BENEFITS,
+  MAX_ATTENDEE_NAME_LENGTH,
+  MAX_BENEFIT_KEY_LENGTH,
+  MAX_BENEFIT_NAME_LENGTH,
   generateTicketCode,
   parseBenefitsConfig,
   resolveAttendeeName,
@@ -54,6 +59,11 @@ export async function issueTicketInTx(
     ticketCode = generateTicketCode(params.eventSlug);
   }
 
+  const safeName = (params.attendeeName.trim() || "Peserta Rohkris").slice(
+    0,
+    MAX_ATTENDEE_NAME_LENGTH,
+  );
+
   await tx.execute(
     `INSERT INTO event_tickets
        (id, response_id, event_id, ticket_code, attendee_name, attendee_email, checkin_status)
@@ -63,18 +73,24 @@ export async function issueTicketInTx(
       params.responseId,
       params.eventId,
       ticketCode,
-      params.attendeeName,
+      safeName,
       params.attendeeEmail,
     ],
   );
 
+  const seenKeys = new Set<string>();
   for (const benefit of params.benefits) {
+    const cleanKey = benefit.key.trim().toLowerCase().slice(0, MAX_BENEFIT_KEY_LENGTH);
+    const cleanName = benefit.name.trim().slice(0, MAX_BENEFIT_NAME_LENGTH);
+    if (!cleanKey || !cleanName || seenKeys.has(cleanKey)) continue;
+    seenKeys.add(cleanKey);
+
     const benefitId = newId();
     await tx.execute(
       `INSERT INTO ticket_benefits
          (id, ticket_id, benefit_key, benefit_name, status)
        VALUES (?, ?, ?, ?, 'unclaimed')`,
-      [benefitId, ticketId, benefit.key.trim().toLowerCase(), benefit.name.trim()],
+      [benefitId, ticketId, cleanKey, cleanName],
     );
   }
 
@@ -171,16 +187,30 @@ export async function getEventTickets(
     params.push(term, term, term);
   }
 
-  const tickets = await query<EventTicketRow & { checked_in_by_name?: string | null }>(
-    `SELECT t.*, u.display_name AS checked_in_by_name
-     FROM event_tickets t
-     LEFT JOIN admin_users u ON t.checked_in_by = u.id
-     WHERE ${where}
-     ORDER BY t.created_at DESC`,
-    params,
-  );
+  const [tickets, formRow] = await Promise.all([
+    query<
+      EventTicketRow & {
+        checked_in_by_name?: string | null;
+        response_answers?: string | null;
+      }
+    >(
+      `SELECT t.*, u.display_name AS checked_in_by_name, r.answers AS response_answers
+       FROM event_tickets t
+       LEFT JOIN admin_users u ON t.checked_in_by = u.id
+       LEFT JOIN form_responses r ON t.response_id = r.id
+       WHERE ${where}
+       ORDER BY t.created_at DESC`,
+      params,
+    ),
+    queryOne<{ definition: string }>(
+      "SELECT definition FROM event_forms WHERE event_id = ?",
+      [eventId],
+    ),
+  ]);
 
   if (tickets.length === 0) return [];
+
+  const definition = formRow ? readDefinition(formRow.definition) : null;
 
   // Ambil semua benefits untuk event ini
   const ticketIds = tickets.map((t) => t.id);
@@ -197,10 +227,27 @@ export async function getEventTickets(
     benefitMap.set(b.ticket_id, list);
   }
 
-  return tickets.map((t) => ({
-    ...t,
-    benefits: benefitMap.get(t.id) ?? [],
-  }));
+  return tickets.map((t) => {
+    let attendeePhone: string | null = null;
+    let attendeeOrg: string | null = null;
+    if (definition && t.response_answers) {
+      try {
+        const parsedAnswers = JSON.parse(t.response_answers) as StoredAnswers;
+        attendeePhone = resolveAttendeePhone(parsedAnswers, definition);
+        attendeeOrg = resolveAttendeeOrg(parsedAnswers, definition);
+      } catch {
+        // abaikan jika JSON tidak valid
+      }
+    }
+    const { response_answers: _ignored, ...rest } = t;
+    void _ignored;
+    return {
+      ...rest,
+      attendee_phone: attendeePhone,
+      attendee_org: attendeeOrg,
+      benefits: benefitMap.get(t.id) ?? [],
+    };
+  });
 }
 
 /**

@@ -74,9 +74,11 @@ type ScanHistoryItem = {
 export function PindaiTiket({
   eventId,
   eventTitle,
+  redemptionMode = "flexible",
 }: {
   eventId: string;
   eventTitle: string;
+  redemptionMode?: "flexible" | "all_in_one";
 }) {
   const [manualInput, setManualInput] = useState("");
   const [kameraAktif, setKameraAktif] = useState(false);
@@ -162,7 +164,7 @@ export function PindaiTiket({
     setFeedbackAksi(null);
 
     startTransition(async () => {
-      const res = await periksaKodeTiket(rawText);
+      const res = await periksaKodeTiket(rawText, eventId);
       setScanResult(res);
 
       if (res.ok) {
@@ -170,6 +172,13 @@ export function PindaiTiket({
           playAudioTone("warning");
         } else {
           playAudioTone("success");
+          if (res.autoConfirmed) {
+            setFeedbackAksi({
+              ok: true,
+              message:
+                "Mode Semua Sekaligus aktif: Kehadiran dan seluruh kupon peserta ini telah otomatis dikonfirmasi.",
+            });
+          }
         }
 
         setHistory((prev) => [
@@ -188,7 +197,7 @@ export function PindaiTiket({
     });
 
     setManualInput("");
-  }, [pending]);
+  }, [pending, eventId]);
 
   const prosesScanRef = useRef(prosesScan);
   useEffect(() => {
@@ -337,6 +346,18 @@ export function PindaiTiket({
             <div>
               <h3 className="font-semibold text-navy-950">Kamera Pemindai</h3>
               <p className="text-xs text-navy-500">Kegiatan: {eventTitle}</p>
+              <span
+                className={cn(
+                  "mt-1.5 inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
+                  redemptionMode === "all_in_one"
+                    ? "bg-gold-200 text-navy-950"
+                    : "bg-navy-100 text-navy-700",
+                )}
+              >
+                {redemptionMode === "all_in_one"
+                  ? "Mode: Semua Sekaligus (Otomatis)"
+                  : "Mode: Fleksibel (Per Pos)"}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               {kameraAktif ? (

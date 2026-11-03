@@ -5,13 +5,20 @@
 import { revalidatePath } from "next/cache";
 
 import { requireAdmin } from "@/lib/auth/guard";
-import { queryOne } from "@/lib/db";
-import type { EventRow } from "@/lib/db/types";
+import { readDefinition } from "@/lib/data/forms";
 import { getSiteSettings } from "@/lib/data/public";
+import { query, queryOne } from "@/lib/db";
+import type {
+  EventFormRow,
+  EventRow,
+  FormResponseFileRow,
+  FormResponseRow,
+} from "@/lib/db/types";
 import { isEmailConfigured, sendEmail } from "@/lib/email/mailer";
 import { getSiteUrl } from "@/lib/env";
-import { formatTanggal, formatRentangKegiatan } from "@/lib/format/date";
+import { formatRentangKegiatan, formatTanggal } from "@/lib/format/date";
 import { buildConfirmationEmail } from "@/lib/forms/email-template";
+import type { FormDefinition, StoredAnswers } from "@/lib/forms/types";
 import {
   claimAll,
   claimBenefit,
@@ -20,12 +27,17 @@ import {
   getTicketById,
 } from "@/lib/tickets/data";
 import { generateQrDataUrl } from "@/lib/tickets/qr";
-import { parseScannedTicketCode } from "@/lib/tickets/ticket-code";
+import {
+  parseScannedTicketCode,
+  verifyScannedQrSignature,
+} from "@/lib/tickets/ticket-code";
 
 export type TicketScanResult =
   | {
       ok: true;
       status: "valid" | "already_checked_in";
+      redemptionMode: "flexible" | "all_in_one";
+      autoConfirmed?: boolean;
       ticket: {
         id: string;
         ticketCode: string;
@@ -63,27 +75,77 @@ export async function dapatkanDataUrlQr(ticketCode: string): Promise<string> {
 /**
  * Memeriksa kode tiket yang dipindai kamera atau dimasukkan panitia.
  */
-export async function periksaKodeTiket(scannedText: string): Promise<TicketScanResult> {
-  await requireAdmin();
+export async function periksaKodeTiket(
+  scannedText: string,
+  expectedEventId?: string,
+): Promise<TicketScanResult> {
+  const auth = await requireAdmin();
+
+  if (!verifyScannedQrSignature(scannedText)) {
+    return {
+      ok: false,
+      message:
+        "Tanda tangan keamanan Kode QR tidak valid (indikasi tiket palsu atau rusak).",
+    };
+  }
 
   const code = parseScannedTicketCode(scannedText);
   if (!code) {
     return { ok: false, message: "Kode QR tidak dikenali sebagai format tiket Rohkris." };
   }
 
-  const ticket = await getTicketByCode(code);
+  let ticket = await getTicketByCode(code);
   if (!ticket) {
     return { ok: false, message: `Tiket dengan kode "${code}" tidak ditemukan di database.` };
   }
 
   const event = await queryOne<EventRow>("SELECT * FROM events WHERE id = ?", [ticket.event_id]);
+
+  if (expectedEventId && ticket.event_id !== expectedEventId) {
+    return {
+      ok: false,
+      message: `Tiket "${ticket.ticket_code}" terdaftar untuk kegiatan lain ("${event?.title ?? "Kegiatan Lain"}"), bukan kegiatan ini.`,
+    };
+  }
+
+  const formRow = await queryOne<Pick<EventFormRow, "ticket_redemption_mode">>(
+    "SELECT ticket_redemption_mode FROM event_forms WHERE event_id = ?",
+    [ticket.event_id],
+  );
+  const redemptionMode = formRow?.ticket_redemption_mode ?? "flexible";
+
+  let status: "valid" | "already_checked_in" =
+    ticket.checkin_status === "attended" ? "already_checked_in" : "valid";
+  let autoConfirmed = false;
+
+  if (redemptionMode === "all_in_one") {
+    const allBenefitsClaimed = ticket.benefits.every((b) => b.status === "claimed");
+    const alreadyFullyUsed = ticket.checkin_status === "attended" && allBenefitsClaimed;
+
+    if (alreadyFullyUsed) {
+      status = "already_checked_in";
+    } else {
+      await claimAll(ticket.id, auth.admin.id);
+      const refreshed = await getTicketById(ticket.id);
+      if (refreshed) {
+        ticket = refreshed;
+      }
+      status = "valid";
+      autoConfirmed = true;
+      revalidatePath(`/admin/kegiatan/${ticket.event_id}/tiket`, "page");
+      revalidatePath(`/admin/kegiatan/${ticket.event_id}/scan`, "page");
+    }
+  }
+
   const eventDate = event
     ? formatRentangKegiatan(event.start_at, event.end_at) ?? formatTanggal(event.start_at)
     : null;
 
   return {
     ok: true,
-    status: ticket.checkin_status === "attended" ? "already_checked_in" : "valid",
+    status,
+    redemptionMode,
+    autoConfirmed,
     ticket: {
       id: ticket.id,
       ticketCode: ticket.ticket_code,
@@ -164,8 +226,25 @@ export async function kirimUlangEmailTiket(ticketId: string): Promise<{ ok: bool
     return { ok: false, message: "Tiket tidak memiliki alamat email yang tersimpan." };
   }
 
-  const event = await queryOne<EventRow>("SELECT * FROM events WHERE id = ?", [ticket.event_id]);
+  const [event, formRow, respRow, fileRows] = await Promise.all([
+    queryOne<EventRow>("SELECT * FROM events WHERE id = ?", [ticket.event_id]),
+    queryOne<EventFormRow>("SELECT * FROM event_forms WHERE event_id = ?", [ticket.event_id]),
+    queryOne<FormResponseRow>("SELECT * FROM form_responses WHERE id = ?", [ticket.response_id]),
+    query<FormResponseFileRow>("SELECT * FROM form_response_files WHERE response_id = ?", [ticket.response_id]),
+  ]);
   if (!event) return { ok: false, message: "Data kegiatan tidak ditemukan." };
+
+  const definition: FormDefinition =
+    (formRow ? readDefinition(formRow.definition) : null) ?? { schemaVersion: 1, sections: [] };
+  let answers: StoredAnswers = {};
+  if (respRow?.answers) {
+    try {
+      answers = JSON.parse(respRow.answers) as StoredAnswers;
+    } catch {
+      answers = {};
+    }
+  }
+  const filesMap = new Map(fileRows.map((f) => [f.id, { id: f.id, name: f.original_name }]));
 
   try {
     const qrDataUrl = await generateQrDataUrl(ticket.ticket_code);
@@ -179,9 +258,11 @@ export async function kirimUlangEmailTiket(ticketId: string): Promise<{ ok: bool
       eventTitle: event.title,
       eventDate: formatRentangKegiatan(event.start_at, event.end_at) ?? formatTanggal(event.start_at),
       eventLocation: event.location,
-      definition: { schemaVersion: 1, sections: [] },
-      answers: {},
+      definition,
+      answers,
+      files: filesMap,
       editUrl: `${getSiteUrl()}/kegiatan/${event.slug}`,
+      confirmationMessage: formRow?.confirmation_message ?? null,
       ticket: {
         ticketCode: ticket.ticket_code,
         attendeeName: ticket.attendee_name,

@@ -1,3 +1,5 @@
+// File: lib/db/types.ts
+
 /**
  * Tipe baris database — dibuat manual agar selaras dengan database/schema.sql.
  *
@@ -242,4 +244,6 @@ export type TicketBenefitRow = {
 export type TicketWithBenefits = EventTicketRow & {
   benefits: TicketBenefitRow[];
   checked_in_by_name?: string | null;
+  attendee_phone?: string | null;
+  attendee_org?: string | null;
 };

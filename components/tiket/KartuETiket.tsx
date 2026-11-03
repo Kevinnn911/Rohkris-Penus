@@ -51,7 +51,7 @@ export function KartuETiket({
   return (
     <div
       id={id}
-      className="mx-auto w-full max-w-lg overflow-hidden rounded-2xl border border-zinc-800 bg-[#18181b] text-white shadow-2xl transition-all"
+      className="mx-auto w-full max-w-lg overflow-hidden rounded-2xl border border-zinc-800 bg-[#18181b] text-white shadow-2xl transition-all [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
     >
       {/* 1. Banner Atas (Foto Gedung SMK Plus Pelita Nusantara / Poster Kegiatan) */}
       <div className="relative aspect-[21/9] w-full overflow-hidden bg-zinc-900 sm:aspect-[16/6]">
@@ -244,7 +244,7 @@ export function KartuETiket({
         </h3>
         <div className="mt-2.5 space-y-3 text-xs leading-relaxed text-zinc-300">
           <div>
-            <p className="font-semibold text-zinc-200">• Do&apos;s (Hal yang dilakukan)</p>
+            <p className="font-semibold text-zinc-200">- Do&apos;s (Hal yang dilakukan)</p>
             <ol className="mt-1 list-decimal space-y-1 pl-4 text-zinc-400">
               <li>Menggunakan pakaian rapi dan sopan yang ditentukan oleh panitia.</li>
               <li>Membuang sampah pada tempat yang telah disediakan.</li>
@@ -254,7 +254,7 @@ export function KartuETiket({
             </ol>
           </div>
           <div>
-            <p className="font-semibold text-zinc-200">• Don&apos;ts (Hal yang dihindari)</p>
+            <p className="font-semibold text-zinc-200">- Don&apos;ts (Hal yang dihindari)</p>
             <ol className="mt-1 list-decimal space-y-1 pl-4 text-zinc-400">
               <li>Dilarang membawa hewan peliharaan.</li>
               <li>Dilarang membawa senjata tajam atau benda-benda berbahaya lainnya.</li>
@@ -268,7 +268,7 @@ export function KartuETiket({
 
       {/* 9. Tombol Aksi Tambahan (Unduh / Cetak) */}
       {aksiTambahan ? (
-        <div className="border-t border-zinc-800/80 bg-zinc-900/60 p-5 sm:p-6">
+        <div className="border-t border-zinc-800/80 bg-zinc-900/60 p-5 sm:p-6 print:hidden">
           {aksiTambahan}
         </div>
       ) : null}

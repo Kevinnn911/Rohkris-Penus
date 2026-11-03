@@ -1,6 +1,6 @@
 // File: lib/tickets/ticket-code.ts
 
-import { createHmac, randomBytes } from "node:crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 import type { TicketBenefitConfig } from "@/lib/db/types";
 import { getAdminSecretKey } from "@/lib/env";
@@ -9,6 +9,10 @@ import { allQuestions, type FormDefinition, type StoredAnswers } from "@/lib/for
 export const DEFAULT_TICKET_BENEFITS: TicketBenefitConfig[] = [
   { key: "konsumsi", name: "Kupon Konsumsi" },
 ];
+
+export const MAX_ATTENDEE_NAME_LENGTH = 120;
+export const MAX_BENEFIT_KEY_LENGTH = 64;
+export const MAX_BENEFIT_NAME_LENGTH = 100;
 
 /**
  * Format kode tiket human-readable:
@@ -36,7 +40,36 @@ export function generateTicketCode(eventSlug: string): string {
  */
 export function signTicketCode(ticketCode: string): string {
   const secret = getAdminSecretKey();
-  return createHmac("sha256", secret).update(ticketCode).digest("hex").slice(0, 16);
+  return createHmac("sha256", secret).update(ticketCode.trim().toUpperCase()).digest("hex").slice(0, 16);
+}
+
+/**
+ * Memverifikasi keaslian HMAC signature pada payload QR ("ROHKRIS:TICKET:<code>:<sig>").
+ * Jika input adalah kode manual ("ROH-XXXX-YYYYYY") atau URL, mengembalikan true.
+ * Jika input berformat payload QR tetapi signature hilang atau tidak cocok, mengembalikan false.
+ */
+export function verifyScannedQrSignature(scannedText: string): boolean {
+  const trimmed = scannedText.trim();
+  if (!trimmed) return false;
+
+  if (trimmed.toUpperCase().startsWith("ROHKRIS:TICKET:")) {
+    const parts = trimmed.split(":");
+    if (parts.length < 4 || !parts[2]?.trim() || !parts[3]?.trim()) {
+      return false;
+    }
+    const code = parts[2].trim().toUpperCase();
+    const providedSig = parts[3].trim().toLowerCase();
+    const expectedSig = signTicketCode(code).toLowerCase();
+
+    const bufProvided = Buffer.from(providedSig, "utf8");
+    const bufExpected = Buffer.from(expectedSig, "utf8");
+    if (bufProvided.length !== bufExpected.length) {
+      return false;
+    }
+    return timingSafeEqual(bufProvided, bufExpected);
+  }
+
+  return true;
 }
 
 /**
@@ -51,9 +84,9 @@ export function parseScannedTicketCode(scannedText: string): string | null {
   if (!trimmed) return null;
 
   // Format 1: ROHKRIS:TICKET:<code>:<sig>
-  if (trimmed.startsWith("ROHKRIS:TICKET:")) {
+  if (trimmed.toUpperCase().startsWith("ROHKRIS:TICKET:")) {
     const parts = trimmed.split(":");
-    if (parts.length >= 3 && parts[2]) {
+    if (parts.length >= 3 && parts[2]?.trim()) {
       return parts[2].trim().toUpperCase();
     }
   }
@@ -85,20 +118,31 @@ export function parseScannedTicketCode(scannedText: string): string | null {
 
 /**
  * Mengurai konfigurasi kupon/benefit dari teks JSON di event_forms.
+ * Menghapus kunci duplikat dan membatasi panjang sesuai skema kolom database.
  */
 export function parseBenefitsConfig(raw: string | null | undefined): TicketBenefitConfig[] {
   if (!raw || !raw.trim()) return DEFAULT_TICKET_BENEFITS;
   try {
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed) && parsed.length > 0) {
-      return parsed.filter(
-        (b) =>
+      const seen = new Set<string>();
+      const valid: TicketBenefitConfig[] = [];
+      for (const b of parsed) {
+        if (
           typeof b === "object" &&
           b !== null &&
           typeof b.key === "string" &&
-          typeof b.name === "string" &&
-          b.key.trim().length > 0,
-      );
+          typeof b.name === "string"
+        ) {
+          const cleanKey = b.key.trim().toLowerCase().slice(0, MAX_BENEFIT_KEY_LENGTH);
+          const cleanName = b.name.trim().slice(0, MAX_BENEFIT_NAME_LENGTH);
+          if (cleanKey.length > 0 && cleanName.length > 0 && !seen.has(cleanKey)) {
+            seen.add(cleanKey);
+            valid.push({ key: cleanKey, name: cleanName });
+          }
+        }
+      }
+      if (valid.length > 0) return valid;
     }
   } catch {
     // jika json invalid, fallback ke default
@@ -110,6 +154,7 @@ export function parseBenefitsConfig(raw: string | null | undefined): TicketBenef
  * Mencari nama peserta dari isian jawaban formulir.
  * Mendahulukan `customQuestionId` bila disetel, atau deteksi otomatis
  * pertanyaan berlabel "Nama / Nama Lengkap".
+ * Dibatasi maksimal 120 karakter sesuai kolom event_tickets.attendee_name.
  */
 export function resolveAttendeeName(
   answers: StoredAnswers,
@@ -118,7 +163,9 @@ export function resolveAttendeeName(
 ): string {
   if (customQuestionId && answers[customQuestionId]) {
     const val = answers[customQuestionId];
-    if (typeof val === "string" && val.trim()) return val.trim();
+    if (typeof val === "string" && val.trim()) {
+      return val.trim().slice(0, MAX_ATTENDEE_NAME_LENGTH);
+    }
   }
 
   const questions = allQuestions(definition);
@@ -126,7 +173,9 @@ export function resolveAttendeeName(
   for (const q of questions) {
     if (q.kind === "short_text" && /nama/i.test(q.title)) {
       const val = answers[q.id];
-      if (typeof val === "string" && val.trim()) return val.trim();
+      if (typeof val === "string" && val.trim()) {
+        return val.trim().slice(0, MAX_ATTENDEE_NAME_LENGTH);
+      }
     }
   }
 
@@ -134,7 +183,9 @@ export function resolveAttendeeName(
   for (const q of questions) {
     if (q.kind === "short_text") {
       const val = answers[q.id];
-      if (typeof val === "string" && val.trim()) return val.trim();
+      if (typeof val === "string" && val.trim()) {
+        return val.trim().slice(0, MAX_ATTENDEE_NAME_LENGTH);
+      }
     }
   }
 
